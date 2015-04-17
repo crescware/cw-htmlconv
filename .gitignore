@@ -1,0 +1,23 @@
+# for WebStorm
+.idea/
+
+# for npm
+node_modules/
+npm-debug.log
+
+# for gulp
+.tscache/
+coverage/
+typings/
+
+# for test
+test-es5/
+test-espowered/
+
+# TypeScript
+*.js
+*.js.map
+
+!gulpfile.js
+!index.js
+!lib/*
