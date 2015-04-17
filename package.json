@@ -1,0 +1,35 @@
+{
+  "name": "cw-attrconv",
+  "version": "0.0.1",
+  "description": "Converter for HTML attributes",
+  "main": "index.js",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://armorik83@github.com/crescware/cw-attrconv.git"
+  },
+  "keywords": [
+    "html",
+    "converter",
+    "attribute"
+  ],
+  "author": "Crescware",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/crescware/cw-attrconv/issues"
+  },
+  "homepage": "https://github.com/crescware/cw-attrconv",
+  "devDependencies": {
+    "babel": "^5.1.10",
+    "del": "^1.1.1",
+    "dtsm": "^0.9.1",
+    "gulp": "^3.8.11",
+    "gulp-espower": "^0.10.1",
+    "gulp-mocha": "^2.0.1",
+    "gulp-shell": "^0.4.1",
+    "run-sequence": "^1.0.2",
+    "typescript": "^1.5.0-alpha"
+  }
+}
