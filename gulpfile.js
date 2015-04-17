@@ -35,7 +35,7 @@ gulp.task('babel:test', shell.task([`babel ${opt.test} --out-dir ${opt.testEs5}`
 
 /* watch */
 gulp.task('exec-watch', ['test'], function() {
-  gulp.watch([`${opt.src}/**/*.ts`, `${opt.test}/unit/**/*.es6`], ['test'])
+  gulp.watch([`${opt.src}/**/*.ts`, `${opt.test}/**/*.es6`], ['test'])
     .on('error', function(err) {
       process.exit(1);
     });
@@ -67,6 +67,9 @@ gulp.task('espower', function() {
 });
 gulp.task('mocha', function() {
   return gulp.src(`${opt.testEspowered}/**/*.js`)
-    .pipe(mocha({reporter: 'spec'}));
+    .pipe(mocha({reporter: 'spec'}))
+    .on('error', function(err) {
+      process.exit(1);
+    });
 });
 gulp.task('test', function(done) {seq('ts:src', 'babel:test', 'espower', 'mocha', done)});
