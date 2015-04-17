@@ -69,4 +69,4 @@ gulp.task('mocha', function() {
   return gulp.src(`${opt.testEspowered}/**/*.js`)
     .pipe(mocha({reporter: 'spec'}));
 });
-gulp.task('test', function(done) {seq('ts:src', 'babel:test', 'espower', 'mocha:unit', done)});
+gulp.task('test', function(done) {seq('ts:src', 'babel:test', 'espower', 'mocha', done)});
