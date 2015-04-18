@@ -1,5 +1,100 @@
+/// <reference path="../typings/es6-promise/es6-promise.d.ts" />
+/// <reference path="../typings/htmlparser2/htmlparser2.d.ts" />
 'use strict';
+import {Promise} from 'es6-promise';
+import * as htmlparser from 'htmlparser2';
 
-export default function main(input: string) {
+let output: string;
+let convertPatterns: any;
 
+/**
+ * @param {string} input
+ * @param {*}      pattern
+ * @returns {Promise<string>}
+ */
+export default function main(input: string, pattern: any): Promise<string> {
+  convertPatterns = pattern || {};
+  output = '';
+  return new Promise((resolve, reject) => {
+    const parser = new htmlparser.Parser({
+      onopentag: onopentag,
+      ontext: ontext,
+      onclosetag: onclosetag,
+      onerror: (err) => {throw err},
+      onend: () => resolve(output)
+    }, {decodeEntities: true});
+    parser.write(input);
+    parser.end();
+  });
+}
+
+/**
+ * @param {string} tag
+ * @param {*} attrs
+ * @returns {void}
+ */
+function onopentag(tag: string, attrs: any) {
+  const convertedAttrs = ((attrs_: any) => {
+    if (!attrs_) {return ''}
+
+    const regexpsForAttr = Object.keys(convertPatterns);
+    let result = '';
+    Object.keys(attrs_).forEach((attr: string, i: number) => {
+      const value = attrs_[attr];
+      const converted = convert(regexpsForAttr, attr, value);
+      const outputTemp = `${converted.attr}="${converted.value}"`;
+      result += (Object.keys(attrs_).length - 1 === i) ? outputTemp : outputTemp + ' ';
+    });
+    return result;
+  })(attrs);
+
+  output += (convertedAttrs)
+    ? `<${tag} ${convertedAttrs}>`
+    : `<${tag}>`;
+}
+
+function convert(regexpsForAttr: string[], attr: string, value: string) {
+  regexpsForAttr.forEach((regexp: string) => {
+    const re = new RegExp(regexp, 'g');
+    const after = convertPatterns[regexp];
+
+    if (typeof after === 'string' && re.test(attr)) {
+      // If after is a string, replacing attr only
+      let substr = after;
+      attr = attr.replace(re, substr);
+
+    } else if (Array.isArray(after) && re.test(attr)) {
+      // If after is an array, attr is replaced by after[0]
+      // after[1] is used to replace pattern for a value
+      const substr = after[0];
+      attr = attr.replace(re, substr);
+
+      const convertPatternsForValue: any = after[1];
+      const regexpsForValue = Object.keys(convertPatternsForValue);
+      regexpsForValue.forEach((regexp: string) => {
+        const re = new RegExp(regexp, 'g');
+        if (re.test(value)) {
+          value = value.replace(re, convertPatternsForValue[regexp]);
+        }
+      });
+    }
+  });
+
+  return {attr: attr, value: value};
+}
+
+/**
+ * @param {string} text
+ * @returns {void}
+ */
+function ontext(text: string) {
+  output += text;
+}
+
+/**
+ * @param {string} tag
+ * @returns {void}
+ */
+function onclosetag(tag: string) {
+  output += `</${tag}>`;
 }
