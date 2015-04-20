@@ -20,6 +20,8 @@ export default function main(input: string, pattern: any): Promise<string> {
       onopentag: onopentag,
       ontext: ontext,
       onclosetag: onclosetag,
+      oncomment: oncomment,
+      oncommentend: oncommentend,
       onerror: (err) => {throw err},
       onend: () => resolve(output)
     }, {decodeEntities: true});
@@ -97,4 +99,19 @@ function ontext(text: string) {
  */
 function onclosetag(tag: string) {
   output += `</${tag}>`;
+}
+
+/**
+ * @param {string} text
+ * @returns {void}
+ */
+function oncomment(text: string) {
+  output += `<!--${text}`;
+}
+
+/**
+ * @returns {void}
+ */
+function oncommentend() {
+  output += `-->`;
 }
