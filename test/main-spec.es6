@@ -52,32 +52,32 @@ describe('main', () => {
   );
 
   parameterized(
-    `<input (click)="action()"></input>`,
-    `<input ng-click="action()"></input>`,
+    `<input (click)="action()">`,
+    `<input ng-click="action()">`,
     {'^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$': 'ng-$1'}
   );
 
   parameterized(
-    `<input #name></input>`,
-    `<input ng-model="name"></input>`,
+    `<input #name>`,
+    `<input ng-model="name">`,
     {'^#(.*)$': ['ng-model', {'.*': '%1'}]}
   );
 
   parameterized(
-    `<input #aaa #bbb></input>`,
-    `<input ng-model="aaa" ng-model="bbb"></input>`,
+    `<input #aaa #bbb>`,
+    `<input ng-model="aaa" ng-model="bbb">`,
     {'^#(.*)$': ['ng-model', {'.*': '%1'}]}
   );
 
   parameterized(
-    `<input #abcde></input>`,
-    `<input ng-model="c"></input>`,
+    `<input #abcde>`,
+    `<input ng-model="c">`,
     {'^#.(.)(.)(.).*$': ['ng-model', {'.*': '%2'}]}
   );
 
   parameterized(
-    `<input #abcde></input>`,
-    `<input ng-model="d"></input>`,
+    `<input #abcde>`,
+    `<input ng-model="d">`,
     {'^#.(.)(.)(.).*$': ['ng-model', {'.*': '%3'}]}
   );
 
