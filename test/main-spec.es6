@@ -19,6 +19,11 @@ describe('main', () => {
   );
 
   parameterized(
+    `<p>Text<br>Text</p>`,
+    `<p>Text<br>Text</p>`
+  );
+
+  parameterized(
     `<p><span>Text</span></p>`,
     `<p><span>Text</span></p>`
   );
@@ -98,6 +103,13 @@ describe('main', () => {
     `<div class="view" ng-class="{hidden: todoEdit == todo}"></div>`,
     {'^\\[class\\.(.*)\\]$': ['ng-class', {'^(.*)$': '{%1: $1}'}]}
   );
+
+  parameterized(
+    `<div class="view" [class.aaa]="true" [class.bbb]="true"></div>`,
+    `<div class="view" ng-class="{aaa: true, bbb: true}"></div>`,
+    {'^\\[class\\.(.*)\\]$': ['ng-class', {'^(.*)$': '{%1: $1}'}]}
+  );
+
 
   it(`Long HTML test`, (done) => {
     const input    = `<div [innertext]="textbox.value" (click)="action()" #name><!-- comment --></div>`;
