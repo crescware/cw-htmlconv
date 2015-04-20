@@ -29,6 +29,11 @@ describe('main', () => {
   );
 
   parameterized(
+    `<p><span><!-- comment --></span></p>`,
+    `<p><span><!-- comment --></span></p>`
+  );
+
+  parameterized(
     `<a href="./">Text</a>`,
     `<a conv="./">Text</a>`,
     {'href': 'conv'}
@@ -55,6 +60,56 @@ describe('main', () => {
   parameterized(
     `<input #name></input>`,
     `<input ng-model="name"></input>`,
-    {'^#(.*)$': ['ng-model', {'.*': '$1'}]}
+    {'^#(.*)$': ['ng-model', {'.*': '%1'}]}
   );
+
+  parameterized(
+    `<input #aaa #bbb></input>`,
+    `<input ng-model="aaa" ng-model="bbb"></input>`,
+    {'^#(.*)$': ['ng-model', {'.*': '%1'}]}
+  );
+
+  parameterized(
+    `<input #abcde></input>`,
+    `<input ng-model="c"></input>`,
+    {'^#.(.)(.)(.).*$': ['ng-model', {'.*': '%2'}]}
+  );
+
+  parameterized(
+    `<input #abcde></input>`,
+    `<input ng-model="d"></input>`,
+    {'^#.(.)(.)(.).*$': ['ng-model', {'.*': '%3'}]}
+  );
+
+  parameterized(
+    `<div [innertext]="textbox.value"></div>`,
+    `<div innertext="{{textbox.value}}"></div>`,
+    {'^\\[([a-zA-Z_][a-zA-Z0-9_]*)\\]$': ['$1', {'^(.*)$': '{{$1}}'}]}
+  );
+
+  parameterized(
+    `<li *foreach="#todo of todos"></li>`,
+    `<li ng-repeat="todo in todos"></li>`,
+    {'^\\*foreach$': ['ng-repeat', {'^#(.*)(\\s+)of(\\s+)(.*)$': '$1$2in$3$4'}]}
+  );
+
+  parameterized(
+    `<div class="view" [class.hidden]="todoEdit == todo"></div>`,
+    `<div class="view" ng-class="{hidden: todoEdit == todo}"></div>`,
+    {'^\\[class\\.(.*)\\]$': ['ng-class', {'^(.*)$': '{%1: $1}'}]}
+  );
+
+  it(`Long HTML test`, (done) => {
+    const input    = `<div [innertext]="textbox.value" (click)="action()" #name><!-- comment --></div>`;
+    const expected = `<div innertext="{{textbox.value}}" ng-click="action()" ng-model="name"><!-- comment --></div>`;
+    const pattern = {
+      '^\\[([a-zA-Z_][a-zA-Z0-9_]*)\\]$': ['$1', {'^(.*)$': '{{$1}}'}],
+      '^#(.*)$': ['ng-model', {'.*': '%1'}],
+      '^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$': 'ng-$1'
+    };
+    attrconv(input, pattern).then((actual) => {
+      assert(actual === expected);
+      done();
+    });
+  });
 });

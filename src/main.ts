@@ -57,32 +57,51 @@ function onopentag(tag: string, attrs: any) {
 
 function convert(regexpsForAttr: string[], attr: string, value: string) {
   regexpsForAttr.forEach((regexp: string) => {
-    const re = new RegExp(regexp, 'g');
+    const reAttr = new RegExp(regexp);
     const after = convertPatterns[regexp];
 
-    if (typeof after === 'string' && re.test(attr)) {
+    if (typeof after === 'string' && reAttr.test(attr)) {
       // If after is a string, replacing attr only
       let substr = after;
-      attr = attr.replace(re, substr);
+      attr = attr.replace(reAttr, substr);
 
-    } else if (Array.isArray(after) && re.test(attr)) {
+    } else if (Array.isArray(after) && reAttr.test(attr)) {
       // If after is an array, attr is replaced by after[0]
       // after[1] is used to replace pattern for a value
       const substr = after[0];
-      attr = attr.replace(re, substr);
+      const originalAttr = attr;
+      attr = attr.replace(reAttr, substr);
 
       const convertPatternsForValue: any = after[1];
-      const regexpsForValue = Object.keys(convertPatternsForValue);
-      regexpsForValue.forEach((regexp: string) => {
-        const re = new RegExp(regexp, 'g');
-        if (re.test(value)) {
-          value = value.replace(re, convertPatternsForValue[regexp]);
-        }
-      });
+      value = convertValue(convertPatternsForValue, originalAttr, value, reAttr);
     }
   });
 
   return {attr: attr, value: value};
+}
+
+function convertValue(convertPatternsForValue: any, attr: string, value: string, reAttr: RegExp): string {
+  const regexpsForValue = Object.keys(convertPatternsForValue);
+  regexpsForValue.forEach((regexp: string) => {
+    const reValue = new RegExp(regexp);
+    const substr = convertPatternsForValue[regexp];
+
+    if (reValue.test(value)) {
+      value = (() => {
+        if (!/%\d/g.test(substr)) {
+          return value.replace(reValue, substr);
+        }
+        // It use from attr matches, if the value substr is specified '%\d'
+        const matches = attr.match(reAttr);
+        value = value.replace(reValue, substr);
+        matches.forEach((m, i) => {
+          value = value.replace(new RegExp(`%${i}`), m);
+        });
+        return value;
+      })();
+    }
+  });
+  return value;
 }
 
 /**
