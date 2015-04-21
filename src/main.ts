@@ -57,10 +57,11 @@ class Builder {
   onOpenTag(tag: string, attrs: {[key: string]: string}) {
     const converter = new Converter(tag, attrs, this.patterns);
     const convertedAttrs = converter.allAttributes();
-
-    this.output += (convertedAttrs)
+    const outputTemp = (convertedAttrs)
       ? `<${tag} ${convertedAttrs}>`
       : `<${tag}>`;
+
+    this.output += outputTemp.replace(/\s{2,}/, ' ').replace(/\s*>/, '>');
   }
 
   /**
@@ -119,6 +120,7 @@ class Converter {
    * }
    */
   attrs: any;
+  attrKeys: string[];
 
   patterns: any;
   targets: string[];
@@ -134,7 +136,8 @@ class Converter {
     this.applied = [];
 
     // Caches
-    this.targets = Object.keys(this.patterns);
+    this.attrKeys = Object.keys(this.attrs);
+    this.targets  = Object.keys(this.patterns);
   }
 
   /**
@@ -145,13 +148,16 @@ class Converter {
     if (!this.attrs) {return ''}
 
     let result = '';
-    const attrKeys = Object.keys(this.attrs);
-    attrKeys.forEach((attr: string, i: number) => {
+    this.attrKeys.forEach((attr: string, i: number) => {
       const value      = this.attrs[attr];
       const converted  = this.convert(attr, value);
-      const outputTemp = `${converted.attr}="${converted.value}"`;
+      const outputTemp = (() => {
+        if (converted.attr === '')  {return ''}
+        if (converted.value === '') {return converted.attr}
+        return `${converted.attr}="${converted.value}"`;
+      })();
 
-      const isLast = attrKeys.length - 1 === i;
+      const isLast = this.attrKeys.length - 1 === i;
       result += (isLast) ? outputTemp : outputTemp + ' ';
     });
 
@@ -170,8 +176,7 @@ class Converter {
 
       if (typeName(want) === 'string' && re.test(attr)) {
         // If a type of the want is a string, only replacing an attribute.
-        const substr = want;
-        attr = attr.replace(re, substr);
+        attr = attr.replace(re, want);
       }
       if (typeName(want) === 'Object' && re.test(attr)) {
         // If a type of the want is the object defined a convert method
@@ -179,30 +184,33 @@ class Converter {
         const def: ConvertMethodDefinition = want;
 
         const alreadyApplied = this.applied.some(v => v === target);
-        if (alreadyApplied) {return}
+        if (alreadyApplied) {
+          // Clear attribute and value if already applied method
+          attr = '';
+          value = '';
+          return;
+        }
 
-        if (def.method !== 'merge' || def.method !== 'split') {
+        if (def.method !== 'merge' && def.method !== 'split') {
           throw new Error('Invalid method');
         }
 
-        const substr = def.newAttribute;
-        attr = attr.replace(re, substr);
         if (def.method === 'merge') {
-          value = this.mergeMultipleAttributes();
+          value = this.mergeMultipleAttributes(def, re);
           this.applied.push(target);
         }
         if (def.method === 'split') {
           // noop
+          // @TODO implement split
         }
+        attr = attr.replace(re, def.newAttribute);
       }
       if (typeName(want) === 'Array' && re.test(attr)) {
         // If a type of the want is an array, attribute is replaced by the want[0]
         // the want[1] is the patterns used to replace for a value
-        const substr = want[0];
         const originalAttr = attr;
-        attr = attr.replace(re, substr);
-
         const patternsForValue: any = want[1];
+        attr  = attr.replace(re, want[0]);
         value = this.convertValue(patternsForValue, originalAttr, value, re);
       }
     });
@@ -214,7 +222,7 @@ class Converter {
    * @param {*}      patternsForValue
    * @param {string} attr
    * @param {string} value
-   * @param {RegExp} reAttr
+   * @param {RegExp} reAttr - RegExp replacing for attribute
    * @returns {string}
    */
   convertValue(patternsForValue: any, attr: string, value: string, reAttr: RegExp): string {
@@ -223,30 +231,52 @@ class Converter {
     targetsForValue.forEach((target: string) => {
       const re = new RegExp(target);
       if (!re.test(value)) {return value}
-
       const substr = patternsForValue[target];
-      value = (() => {
-        if (!/%\d/g.test(substr)) {
-          return value.replace(re, substr);
-        }
-        // It use from attr matches, if the value substr is specified '%\d'
-        const matches = attr.match(reAttr);
-        value = value.replace(re, substr);
-        matches.forEach((m, i) => {
-          value = value.replace(new RegExp(`%${i}`), m);
-        });
-        return value;
-      })();
-
+      value = this.replaceWithAttributeMatch(attr, value, reAttr, re, substr);
     });
     return value;
   }
 
   /**
+   * @param {string} attr
+   * @param {string} value
+   * @param {RegExp} reAttr
+   * @param {RegExp} reValue
+   * @param {string} substr
    * @returns {string}
    */
-  mergeMultipleAttributes(): string {
-    return '';
+  replaceWithAttributeMatch(attr: string, value: string, reAttr: RegExp, reValue: RegExp, substr: string) {
+    if (!/%\d/g.test(substr)) {
+      return value.replace(reValue, substr);
+    }
+    // It use from attr matches, if the value substr is specified '%\d'
+    const matches = attr.match(reAttr);
+    value = value.replace(reValue, substr);
+    if (typeName(matches) === 'null') {return value}
+
+    matches.forEach((m, i) => {
+      value = value.replace(new RegExp(`%${i}`), m);
+    });
+    return value;
+  }
+
+  /**
+   * @param {ConvertMethodDefinition} def
+   * @param {RegExp} reAttr
+   * @returns {string}
+   */
+  mergeMultipleAttributes(def: ConvertMethodDefinition, reAttr: RegExp): string {
+    let values: string[] = [];
+    const reValue = new RegExp(def.valuePattern);
+    const substr = def.newValue;
+    this.attrKeys.forEach((attr: string) => {
+      if (!reAttr.test(attr)) {return}
+      const value = this.replaceWithAttributeMatch(attr, this.attrs[attr], reAttr, reValue, substr);
+      values.push(value);
+    });
+
+    const stringValues = values.join(def.separator);
+    return def.open + stringValues + def.close;
   }
 }
 

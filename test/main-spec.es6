@@ -7,6 +7,7 @@ describe('main', () => {
   function parameterized(input, expected, pattern) {
     it(`${input} to be ${expected}`, (done) => {
       attrconv(input, pattern).then((actual) => {
+        //console.log(actual);
         assert(actual === expected);
         done();
       });
@@ -116,29 +117,63 @@ describe('main', () => {
     {'^\\[class\\.(.*)\\]$': ['ng-class', {'^(.*)$': '{%1: $1}'}]}
   );
 
-  //parameterized(
-  //  `<div class="view" [class.aaa]="true" [class.bbb]="false"></div>`,
-  //  `<div class="view" ng-class="{aaa: true, bbb: false}"></div>`,
-  //  {
-  //    '^\\[class\\.(.*)\\]$': {
-  //      method: 'merge',
-  //      newAttribute: 'ng-class',
-  //      open: '{',
-  //      close: '}',
-  //      separator: ',',
-  //      valuePattern: '^(.*)$',
-  //      newValue: '%1: $1'
-  //    }
-  //  }
-  //);
+  parameterized(
+    `<div class="view" [class.aaa]="true" [class.bbb]="false"></div>`,
+    `<div class="view" ng-class="{aaa: true, bbb: false}"></div>`,
+    {
+      '^\\[class\\.(.+)\\]$': {
+        method: 'merge',
+        newAttribute: 'ng-class',
+        open: '{',
+        close: '}',
+        separator: ', ',
+        valuePattern: '^(.*)$',
+        newValue: '%1: $1'
+      }
+    }
+  );
+
+  parameterized(
+    `<div foo.a="12345" foo.b="67890"></div><div foo.a="qwert" foo.b="yuiop" bar.a="asdfg" bar.b="hjkl;"></div>`,
+    `<div foo-foo="{{a1:234:, b6:789:}}"></div><div foo-foo="{{aq:wer:, by:uio:}}" bar="(a| dfas; b| klhj)"></div>`,
+    {
+      '^(foo)\\.(.+)$': {
+        method: 'merge',
+        newAttribute: '$1-$1',
+        open: '{{',
+        close: '}}',
+        separator: ', ',
+        valuePattern: '^(.)(.{3}).*$',
+        newValue: '%2$1:$2:'
+      },
+      '^(bar)\\.(.+)$': {
+        method: 'merge',
+        newAttribute: '$1',
+        open: '(',
+        close: ')',
+        separator: '; ',
+        valuePattern: '^(..)(..).*$',
+        newValue: '%2| $2$1'
+      }
+    }
+  );
 
   it(`Long HTML test`, (done) => {
-    const input    = `<div [innertext]="textbox.value" (click)="action()" #name><!-- comment --></div>`;
-    const expected = `<div innertext="{{textbox.value}}" ng-click="action()" ng-model="name"><!-- comment --></div>`;
+    const input    = `<div [innertext]="textbox.value" (click)="action()" #name [class.aaa]="true" [class.bbb]="false"><!-- comment --></div>`;
+    const expected = `<div innertext="{{textbox.value}}" ng-click="action()" ng-model="name" ng-class="{aaa: true, bbb: false}"><!-- comment --></div>`;
     const pattern = {
       '^\\[([a-zA-Z_][a-zA-Z0-9_]*)\\]$': ['$1', {'^(.*)$': '{{$1}}'}],
       '^#(.*)$': ['ng-model', {'.*': '%1'}],
-      '^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$': 'ng-$1'
+      '^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$': 'ng-$1',
+      '^\\[class\\.(.+)\\]$': {
+        method: 'merge',
+        newAttribute: 'ng-class',
+        open: '{',
+        close: '}',
+        separator: ', ',
+        valuePattern: '^(.*)$',
+        newValue: '%1: $1'
+      }
     };
     attrconv(input, pattern).then((actual) => {
       assert(actual === expected);
