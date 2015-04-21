@@ -1,11 +1,24 @@
 /// <reference path="../typings/es6-promise/es6-promise.d.ts" />
 /// <reference path="../typings/htmlparser2/htmlparser2.d.ts" />
+/// <reference path="../typings/type-name/type-name.d.ts" />
 'use strict';
 import {Promise} from 'es6-promise';
 import * as htmlparser from 'htmlparser2';
+import * as typeName from 'type-name';
 
 let output: string;
 let convertPatterns: any;
+let applied: string[];
+
+interface ConvertMethodDefinition {
+  method: string;
+  newAttribute: string;
+  open: string;
+  close: string;
+  separator: string;
+  valuePattern: string;
+  newValue: string;
+}
 
 /**
  * @param {string} input
@@ -60,12 +73,34 @@ function convert(regexpsForAttr: string[], attr: string, value: string) {
     const reAttr = new RegExp(regexp);
     const after = convertPatterns[regexp];
 
-    if (typeof after === 'string' && reAttr.test(attr)) {
+    if (typeName(after) === 'string' && reAttr.test(attr)) {
       // If after is a string, replacing attr only
-      let substr = after;
+      const substr = after;
       attr = attr.replace(reAttr, substr);
+    }
+    if (typeName(after) === 'Object' && reAttr.test(attr)) {
+      // If after is the object defined a convert method
+      // converter will do the method
+      const def: ConvertMethodDefinition = after;
 
-    } else if (Array.isArray(after) && reAttr.test(attr)) {
+      const alreadyApplied = applied.some(v => v === regexp);
+      if (alreadyApplied) {return}
+
+      if (def.method !== 'merge' || def.method !== 'split') {
+        throw new Error('Invalid method');
+      }
+
+      const substr = def.newAttribute;
+      attr = attr.replace(reAttr, substr);
+      if (def.method === 'merge') {
+        value = mergeMultipleAttributes();
+        applied.push(regexp);
+      }
+      if (def.method === 'split') {
+        // noop
+      }
+    }
+    if (typeName(after) === 'Array' && reAttr.test(attr)) {
       // If after is an array, attr is replaced by after[0]
       // after[1] is used to replace pattern for a value
       const substr = after[0];
@@ -102,6 +137,13 @@ function convertValue(convertPatternsForValue: any, attr: string, value: string,
     }
   });
   return value;
+}
+
+/**
+ * @returns {string}
+ */
+function mergeMultipleAttributes(): string {
+  return '';
 }
 
 /**

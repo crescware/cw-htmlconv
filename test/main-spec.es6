@@ -112,9 +112,19 @@ describe('main', () => {
   );
 
   //parameterized(
-  //  `<div class="view" [class.aaa]="true" [class.bbb]="true"></div>`,
-  //  `<div class="view" ng-class="{aaa: true, bbb: true}"></div>`,
-  //  {'^\\[class\\.(.*)\\]$': ['ng-class', {'^(.*)$': '{%1: $1}'}]}
+  //  `<div class="view" [class.aaa]="true" [class.bbb]="false"></div>`,
+  //  `<div class="view" ng-class="{aaa: true, bbb: false}"></div>`,
+  //  {
+  //    '^\\[class\\.(.*)\\]$': {
+  //      method: 'merge',
+  //      newAttribute: 'ng-class',
+  //      open: '{',
+  //      close: '}',
+  //      separator: ',',
+  //      valuePattern: '^(.*)$',
+  //      newValue: '%1: $1'
+  //    }
+  //  }
   //);
 
   it(`Long HTML test`, (done) => {
