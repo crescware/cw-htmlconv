@@ -117,6 +117,8 @@ function ontext(text: string) {
  * @returns {void}
  */
 function onclosetag(tag: string) {
+  const isVoidElements = voidElements().some(v => v === tag);
+  if (isVoidElements) {return}
   output += `</${tag}>`;
 }
 
@@ -133,4 +135,13 @@ function oncomment(text: string) {
  */
 function oncommentend() {
   output += `-->`;
+}
+
+/**
+ * Return a string array include the void elements in HTML 5
+ * @see http://www.w3.org/TR/html-markup/syntax.html#void-element
+ * @returns {string[]}
+ */
+function voidElements() {
+  return 'area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr'.split(', ');
 }
