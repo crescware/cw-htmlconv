@@ -147,35 +147,38 @@ class Converter {
     let result = '';
     const attrKeys = Object.keys(this.attrs);
     attrKeys.forEach((attr: string, i: number) => {
-      const value = this.attrs[attr];
-      const converted = this.convert(attr, value);
+      const value      = this.attrs[attr];
+      const converted  = this.convert(attr, value);
       const outputTemp = `${converted.attr}="${converted.value}"`;
-      result += (attrKeys.length - 1 === i) ? outputTemp : outputTemp + ' ';
+
+      const isLast = attrKeys.length - 1 === i;
+      result += (isLast) ? outputTemp : outputTemp + ' ';
     });
+
     return result;
   }
 
   /**
-   * @param {string}   attr
-   * @param {string}   value
+   * @param {string} attr
+   * @param {string} value
    * @returns {{attr: string, value: string}}
    */
   convert(attr: string, value: string) {
-    this.targets.forEach((regexp: string) => {
-      const reAttr = new RegExp(regexp);
-      const after = this.patterns[regexp];
+    this.targets.forEach((target: string) => {
+      const re = new RegExp(target);
+      const want = this.patterns[target];
 
-      if (typeName(after) === 'string' && reAttr.test(attr)) {
-        // If after is a string, replacing attr only
-        const substr = after;
-        attr = attr.replace(reAttr, substr);
+      if (typeName(want) === 'string' && re.test(attr)) {
+        // If a type of the want is a string, only replacing an attribute.
+        const substr = want;
+        attr = attr.replace(re, substr);
       }
-      if (typeName(after) === 'Object' && reAttr.test(attr)) {
-        // If after is the object defined a convert method
+      if (typeName(want) === 'Object' && re.test(attr)) {
+        // If a type of the want is the object defined a convert method
         // converter will do the method
-        const def: ConvertMethodDefinition = after;
+        const def: ConvertMethodDefinition = want;
 
-        const alreadyApplied = this.applied.some(v => v === regexp);
+        const alreadyApplied = this.applied.some(v => v === target);
         if (alreadyApplied) {return}
 
         if (def.method !== 'merge' || def.method !== 'split') {
@@ -183,24 +186,24 @@ class Converter {
         }
 
         const substr = def.newAttribute;
-        attr = attr.replace(reAttr, substr);
+        attr = attr.replace(re, substr);
         if (def.method === 'merge') {
           value = this.mergeMultipleAttributes();
-          this.applied.push(regexp);
+          this.applied.push(target);
         }
         if (def.method === 'split') {
           // noop
         }
       }
-      if (typeName(after) === 'Array' && reAttr.test(attr)) {
-        // If after is an array, attr is replaced by after[0]
-        // after[1] is used to replace pattern for a value
-        const substr = after[0];
+      if (typeName(want) === 'Array' && re.test(attr)) {
+        // If a type of the want is an array, attribute is replaced by the want[0]
+        // the want[1] is the patterns used to replace for a value
+        const substr = want[0];
         const originalAttr = attr;
-        attr = attr.replace(reAttr, substr);
+        attr = attr.replace(re, substr);
 
-        const convertPatternsForValue: any = after[1];
-        value = this.convertValue(convertPatternsForValue, originalAttr, value, reAttr);
+        const patternsForValue: any = want[1];
+        value = this.convertValue(patternsForValue, originalAttr, value, re);
       }
     });
 
@@ -208,32 +211,33 @@ class Converter {
   }
 
   /**
-   * @param {*}      convertPatternsForValue
+   * @param {*}      patternsForValue
    * @param {string} attr
    * @param {string} value
    * @param {RegExp} reAttr
    * @returns {string}
    */
-  convertValue(convertPatternsForValue: any, attr: string, value: string, reAttr: RegExp): string {
-    const regexpsForValue = Object.keys(convertPatternsForValue);
-    regexpsForValue.forEach((regexp: string) => {
-      const reValue = new RegExp(regexp);
-      const substr = convertPatternsForValue[regexp];
+  convertValue(patternsForValue: any, attr: string, value: string, reAttr: RegExp): string {
+    const targetsForValue = Object.keys(patternsForValue);
 
-      if (reValue.test(value)) {
-        value = (() => {
-          if (!/%\d/g.test(substr)) {
-            return value.replace(reValue, substr);
-          }
-          // It use from attr matches, if the value substr is specified '%\d'
-          const matches = attr.match(reAttr);
-          value = value.replace(reValue, substr);
-          matches.forEach((m, i) => {
-            value = value.replace(new RegExp(`%${i}`), m);
-          });
-          return value;
-        })();
-      }
+    targetsForValue.forEach((target: string) => {
+      const re = new RegExp(target);
+      if (!re.test(value)) {return value}
+
+      const substr = patternsForValue[target];
+      value = (() => {
+        if (!/%\d/g.test(substr)) {
+          return value.replace(re, substr);
+        }
+        // It use from attr matches, if the value substr is specified '%\d'
+        const matches = attr.match(reAttr);
+        value = value.replace(re, substr);
+        matches.forEach((m, i) => {
+          value = value.replace(new RegExp(`%${i}`), m);
+        });
+        return value;
+      })();
+
     });
     return value;
   }
