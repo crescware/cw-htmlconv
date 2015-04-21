@@ -16,10 +16,9 @@ interface ConvertMethodDefinition {
   newValue: string;
 }
 
-class Converter {
+class Builder {
   input:    string;
   output:   string;
-  applied:  string[];
   patterns: any;
 
   /**
@@ -28,7 +27,6 @@ class Converter {
   constructor(input: string, patterns?: any) {
     this.input   = input;
     this.output  = '';
-    this.applied = [];
     this.patterns = patterns || {};
   }
 
@@ -56,20 +54,9 @@ class Converter {
    * @param {*} attrs
    * @returns {void}
    */
-  onOpenTag(tag: string, attrs: any) {
-    const convertedAttrs = ((attrs_: any) => {
-      if (!attrs_) {return ''}
-
-      const regexpsForAttr = Object.keys(this.patterns);
-      let result = '';
-      Object.keys(attrs_).forEach((attr: string, i: number) => {
-        const value = attrs_[attr];
-        const converted = this.convert(regexpsForAttr, attr, value);
-        const outputTemp = `${converted.attr}="${converted.value}"`;
-        result += (Object.keys(attrs_).length - 1 === i) ? outputTemp : outputTemp + ' ';
-      });
-      return result;
-    })(attrs);
+  onOpenTag(tag: string, attrs: {[key: string]: string}) {
+    const converter = new Converter(tag, attrs, this.patterns);
+    const convertedAttrs = converter.allAttributes();
 
     this.output += (convertedAttrs)
       ? `<${tag} ${convertedAttrs}>`
@@ -109,9 +96,72 @@ class Converter {
     this.output += `-->`;
   }
 
+  /**
+   * Return a string array include the void elements in HTML 5
+   * @see http://www.w3.org/TR/html-markup/syntax.html#void-element
+   * @returns {string[]}
+   */
+  voidElements() {
+    return 'area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr'.split(', ');
+  }
+}
 
-  convert(regexpsForAttr: string[], attr: string, value: string) {
-    regexpsForAttr.forEach((regexp: string) => {
+class Converter {
+  tag: string;
+
+  /**
+   * attrs type example
+   * {
+   *   src: 'image.jpg',
+   *   alt: 'Alternative',
+   *   width: '42',
+   *   height: '42'
+   * }
+   */
+  attrs: any;
+
+  patterns: any;
+  targets: string[];
+  applied: string[];
+
+  /**
+   * @constructor
+   */
+  constructor(tag: string, attrs: any, patterns: any) {
+    this.tag = tag;
+    this.attrs = attrs;
+    this.patterns = patterns;
+    this.applied = [];
+
+    // Caches
+    this.targets = Object.keys(this.patterns);
+  }
+
+  /**
+   * @param {*} attrs
+   * @returns {string}
+   */
+  allAttributes(): string {
+    if (!this.attrs) {return ''}
+
+    let result = '';
+    const attrKeys = Object.keys(this.attrs);
+    attrKeys.forEach((attr: string, i: number) => {
+      const value = this.attrs[attr];
+      const converted = this.convert(attr, value);
+      const outputTemp = `${converted.attr}="${converted.value}"`;
+      result += (attrKeys.length - 1 === i) ? outputTemp : outputTemp + ' ';
+    });
+    return result;
+  }
+
+  /**
+   * @param {string}   attr
+   * @param {string}   value
+   * @returns {{attr: string, value: string}}
+   */
+  convert(attr: string, value: string) {
+    this.targets.forEach((regexp: string) => {
       const reAttr = new RegExp(regexp);
       const after = this.patterns[regexp];
 
@@ -157,6 +207,13 @@ class Converter {
     return {attr: attr, value: value};
   }
 
+  /**
+   * @param {*}      convertPatternsForValue
+   * @param {string} attr
+   * @param {string} value
+   * @param {RegExp} reAttr
+   * @returns {string}
+   */
   convertValue(convertPatternsForValue: any, attr: string, value: string, reAttr: RegExp): string {
     const regexpsForValue = Object.keys(convertPatternsForValue);
     regexpsForValue.forEach((regexp: string) => {
@@ -187,15 +244,6 @@ class Converter {
   mergeMultipleAttributes(): string {
     return '';
   }
-
-  /**
-   * Return a string array include the void elements in HTML 5
-   * @see http://www.w3.org/TR/html-markup/syntax.html#void-element
-   * @returns {string[]}
-   */
-  voidElements() {
-    return 'area, base, br, col, command, embed, hr, img, input, keygen, link, meta, param, source, track, wbr'.split(', ');
-  }
 }
 
 /**
@@ -204,6 +252,6 @@ class Converter {
  * @returns {Promise<string>}
  */
 export default function main(input: string, pattern?: any): Promise<string> {
-  const converter = new Converter(input, pattern);
-  return converter.result();
+  const builder = new Builder(input, pattern);
+  return builder.result();
 }

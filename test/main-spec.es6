@@ -34,6 +34,11 @@ describe('main', () => {
   );
 
   parameterized(
+    `<body><h1><img src="image.png" alt="Alternative" width="90" height="53"></h1></body>`,
+    `<body><h1><img src="image.png" alt="Alternative" width="90" height="53"></h1></body>`
+  );
+
+  parameterized(
     `<p><span><!-- comment --></span></p>`,
     `<p><span><!-- comment --></span></p>`
   );
