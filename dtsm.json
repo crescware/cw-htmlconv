@@ -8,11 +8,22 @@
   "path": "typings",
   "bundle": "typings/bundle.d.ts",
   "dependencies": {
+    "type-name/type-name.d.ts": {
+      "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
+    },
+    "node/node.d.ts": {
+      "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
+    },
     "htmlparser2/htmlparser2.d.ts": {
-      "ref": "52fa2b9ce36f2c5843204e9bfbaada7cded9b47a"
+      "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
     },
     "es6-promise/es6-promise.d.ts": {
-      "ref": "52fa2b9ce36f2c5843204e9bfbaada7cded9b47a"
+      "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
+    },
+    "commandpost/commandpost.d.ts": {
+      "repo": "https://github.com/vvakame/commandpost.git",
+      "ref": "cbca04b84c56f9991c5a7fca87cfd6beda47bfd0",
+      "path": "commandpost.d.ts"
     }
   }
 }

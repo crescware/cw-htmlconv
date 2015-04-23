@@ -4,8 +4,11 @@
   "description": "Converter for HTML attributes",
   "main": "index.js",
   "scripts": {
+    "build": "gulp build:src",
+    "dtsm": "dtsm install",
     "test": "gulp test",
-    "watch": "gulp watch"
+    "watch": "gulp watch:test",
+    "watch:cli": "gulp watch:cli"
   },
   "repository": {
     "type": "git",
