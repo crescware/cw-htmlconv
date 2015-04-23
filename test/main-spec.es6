@@ -19,6 +19,11 @@ describe('main', () => {
   );
 
   parameterized(
+    `<p>漢字</p>`,
+    `<p>漢字</p>`
+  );
+
+  parameterized(
     `<p>Text<br>Text</p>`,
     `<p>Text<br>Text</p>`
   );
@@ -56,6 +61,12 @@ describe('main', () => {
   parameterized(
     `<a href="./">Text</a>`,
     `<a conv="./">Text</a>`,
+    {'href': 'conv'}
+  );
+
+  parameterized(
+    `<a href="./">漢字</a>`,
+    `<a conv="./">漢字</a>`,
     {'href': 'conv'}
   );
 
