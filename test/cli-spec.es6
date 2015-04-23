@@ -9,8 +9,6 @@ const dir = {
   fixtures: path.resolve(process.cwd(), 'test/fixtures')
 };
 
-console.log(dir);
-
 describe('cli', () => {
   const bin = path.resolve(process.cwd(), 'bin/attrconv');
   const command = (process.platform === 'win32') ? `node ${bin}` : bin;
