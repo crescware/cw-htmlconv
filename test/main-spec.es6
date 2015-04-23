@@ -1,5 +1,4 @@
-import * as assert_ from 'power-assert';
-const assert = assert_.default;
+import assert from 'power-assert';
 import attrconv_ from '../index';
 const attrconv = attrconv_.default; // HACK for default by TypeScript 1.5 Alpha
 
