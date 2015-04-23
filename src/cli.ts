@@ -13,15 +13,15 @@ interface RootOptions {
 }
 
 interface RootArgs {
-  inputFile: string;
+  inputPath: string;
 }
 
 const pkg = require('../package.json');
 const root = commandpost
-  .create<RootOptions, RootArgs>('attrconv [inputFile]')
+  .create<RootOptions, RootArgs>('attrconv [inputPath]')
   .version(pkg.version, '-v, --version')
   .option('-o, --out [path]', 'Output to single file')
-  .option('-p, --patterns [file]', 'JSON file of Definition for convert patterns')
+  .option('-p, --patterns [path]', 'JSON file of Definition for convert patterns')
   .option('-t, --text [html]', 'Raw HTML text that want to convert')
   .option('-v, --version', 'Print version')
   .option('--patterns-text [text]', 'JSON Definition for convert patterns')
@@ -67,11 +67,11 @@ commandpost
  */
 function text(opts: RootOptions, args: RootArgs): Promise<string> {
   return new Promise((resolve, reject) => {
-    if (!args.inputFile && opts.text[0]) {
+    if (!args.inputPath && opts.text[0]) {
       resolve(opts.text[0]);
       return;
     }
-    if (args.inputFile) {
+    if (args.inputPath) {
       fs.readFile(args.inputPath, 'utf8', (err: any, data: string) => {
         if (err) {return reject(err)}
         resolve(data);
