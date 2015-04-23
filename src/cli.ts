@@ -24,7 +24,6 @@ const root = commandpost
   .option('-p, --patterns [file]', 'JSON file of Definition for convert patterns')
   .option('-t, --text [html]', 'Raw HTML text that want to convert')
   .option('-v, --version', 'Print version')
-  .option('--encoding [encoding]', 'Encoding of input file, default is utf8')
   .option('--patterns-text [text]', 'JSON Definition for convert patterns')
   .action((opts, args, rest) => {
     // for Debug
@@ -73,9 +72,7 @@ function text(opts: RootOptions, args: RootArgs): Promise<string> {
       return;
     }
     if (args.inputFile) {
-      const defaultEncoding = 'utf8';
-      //const encoding = (!opts.encoding[0]) ? defaultEncoding : opts.encoding[0];
-      fs.readFile(args.inputFile, 'utf8', (err: any, data: string) => {
+      fs.readFile(args.inputPath, 'utf8', (err: any, data: string) => {
         if (err) {return reject(err)}
         resolve(data);
       });
@@ -93,7 +90,7 @@ function patterns(opts: RootOptions): Promise<any> {
   return new Promise((resolve, reject) => {
     if (opts.patterns && opts.patterns[0]) {
       let patternsPath = opts.patterns[0];
-      fs.readFile(patternsPath, 'utf-8', (err: any, data: string) => {
+      fs.readFile(patternsPath, 'utf8', (err: any, data: string) => {
         if (err) {return reject(err)}
         resolve(JSON.parse(data));
       });
