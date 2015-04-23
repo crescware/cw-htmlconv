@@ -77,4 +77,4 @@ gulp.task('mocha', function() {
       process.exit(1);
     });
 });
-gulp.task('test', function(done) {seq('ts:src', 'babel:test', 'mocha', done)});
+gulp.task('test', function(done) {seq('build:src', 'babel:test', 'mocha', done)});
