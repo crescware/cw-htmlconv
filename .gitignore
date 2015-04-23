@@ -9,6 +9,7 @@ npm-debug.log
 .tscache/
 coverage/
 typings/
+lib/
 
 # for test
 test-es5/
@@ -20,4 +21,3 @@ test-espowered/
 
 !gulpfile.js
 !index.js
-!lib/*
