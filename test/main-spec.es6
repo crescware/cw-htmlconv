@@ -29,6 +29,16 @@ describe('main', () => {
   );
 
   parameterized(
+    `<!DOCTYPE html><html></html>`,
+    `<!DOCTYPE html><html></html>`
+  );
+
+  parameterized(
+    `<!DOCTYPE html>\n<html>\n</html>`,
+    `<!DOCTYPE html>\n<html>\n</html>`
+  );
+
+  parameterized(
     `<a href="./">Text</a>`,
     `<a href="./">Text</a>`
   );

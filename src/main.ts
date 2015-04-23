@@ -281,11 +281,33 @@ class Converter {
 }
 
 /**
+ * Currently htmlparser2 v3.8.2 does not support ondoctype event
+ * It's a tentative support with an ugly regexp
+ * z
+ * @param {string} input
+ * @param {string} output
+ * @returns {string}
+ */
+function addDoctype(input: string, output: string): string {
+  const firstLine = input.split('\n')[0];
+  const re = /^(<!DOCTYPE.*?>)(.*)$/;
+  if (re.test(firstLine)) {
+    const match = firstLine.match(re);
+    const doctype = match[1];
+    output = doctype + output;
+  }
+  return output;
+}
+
+/**
  * @param {string} input
  * @param {*}      pattern
  * @returns {Promise<string>}
  */
 export default function main(input: string, pattern?: any): Promise<string> {
   const builder = new Builder(input, pattern);
-  return builder.result();
+  return builder.result().then((output: string) => {
+    output = addDoctype(input, output);
+    return Promise.resolve(output);
+  });
 }
