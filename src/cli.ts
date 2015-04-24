@@ -44,7 +44,7 @@ const root = commandpost
         outputFile(opts.out[0], out);
       })
       .catch((err: any) => {
-        process.stderr.write(err + '\n');
+        console.error(err.stack);
         process.exit(1);
       });
   });
@@ -92,13 +92,32 @@ function patterns(opts: RootOptions): Promise<any> {
       let patternsPath = opts.patterns[0];
       fs.readFile(patternsPath, 'utf8', (err: any, data: string) => {
         if (err) {return reject(err)}
-        resolve(JSON.parse(data));
+        var json = '';
+        try {
+          json = JSON.parse(data);
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            return reject(new SyntaxError(`${patternsPath} is invalid syntax`));
+          } else {
+            return reject(e);
+          }
+        }
+        resolve(json);
       });
       return;
     }
     if (opts.patternsText && opts.patternsText[0]) {
-      resolve(JSON.parse(opts.patternsText[0]));
-      return;
+      var json = '';
+      try {
+        json = JSON.parse(opts.patternsText[0]);
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          return reject(new SyntaxError('Unexpected syntax was given to --patterns-text'));
+        } else {
+          return reject(e);
+        }
+      }
+      return resolve(json);
     }
     resolve({});
   });
