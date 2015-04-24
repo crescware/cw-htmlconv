@@ -1,4 +1,7 @@
 # cw-attrconv
+
+[![Build Status](https://circleci.com/gh/crescware/cw-attrconv.svg?style=shield&circle-token=64f31a478cb12b6e1457fbce1b966a48a8771ee9)](https://circleci.com/gh/crescware/cw-attrconv)
+
 Converter for HTML attributes.
 
 ## Example
