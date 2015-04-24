@@ -18,7 +18,7 @@ interface RootArgs {
 
 const pkg = require('../package.json');
 const root = commandpost
-  .create<RootOptions, RootArgs>('attrconv [inputPath]')
+  .create<RootOptions, RootArgs>('cw-attrconv [inputPath]')
   .version(pkg.version, '-v, --version')
   .option('-o, --out [path]', 'Output to single file')
   .option('-p, --patterns [path]', 'JSON file of Definition for convert patterns')
