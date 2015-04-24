@@ -6,17 +6,16 @@ node_modules/
 npm-debug.log
 
 # for gulp
+gulpfile.js
 .tscache/
 coverage/
 typings/
-lib/
+src/
 
 # for test
+test/
 test-espowered/
 
 # TypeScript
-*.js
-*.js.map
-
-!gulpfile.js
-!index.js
+*.ts
+dtsm.json
