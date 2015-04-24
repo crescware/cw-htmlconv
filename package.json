@@ -1,30 +1,17 @@
 {
   "name": "cw-attrconv",
-  "version": "0.0.1",
   "description": "Converter for HTML attributes",
-  "main": "index.js",
-  "scripts": {
-    "build": "gulp build:src",
-    "dtsm": "dtsm install",
-    "test": "gulp test",
-    "watch": "gulp watch:test",
-    "watch:cli": "gulp watch:cli"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://armorik83@github.com/crescware/cw-attrconv.git"
-  },
-  "keywords": [
-    "html",
-    "converter",
-    "attribute"
-  ],
+  "version": "0.0.1",
   "author": "Crescware",
-  "license": "MIT",
   "bugs": {
     "url": "https://github.com/crescware/cw-attrconv/issues"
   },
-  "homepage": "https://github.com/crescware/cw-attrconv",
+  "dependencies": {
+    "commandpost": "^0.1.1",
+    "es6-promise": "^2.1.0",
+    "htmlparser2": "^3.8.2",
+    "type-name": "^1.0.1"
+  },
   "devDependencies": {
     "babel": "^5.1.11",
     "babel-core": "^5.1.11",
@@ -40,10 +27,23 @@
     "run-sequence": "^1.0.2",
     "typescript": "^1.5.0-alpha"
   },
-  "dependencies": {
-    "commandpost": "^0.1.1",
-    "es6-promise": "^2.1.0",
-    "htmlparser2": "^3.8.2",
-    "type-name": "^1.0.1"
+  "homepage": "https://github.com/crescware/cw-attrconv",
+  "keywords": [
+    "attribute",
+    "converter",
+    "html"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://armorik83@github.com/crescware/cw-attrconv.git"
+  },
+  "scripts": {
+    "build": "gulp build:src",
+    "dtsm": "dtsm install",
+    "test": "gulp test",
+    "watch": "gulp watch:test",
+    "watch:cli": "gulp watch:cli"
   }
 }
