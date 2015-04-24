@@ -4,4 +4,4 @@ machine:
 
 dependencies:
   override:
-    - npm i && ./node_modules/.bin/dtsm install
+    - npm i && ./node_modules/.bin/dtsm install --insight false
