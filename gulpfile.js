@@ -10,7 +10,13 @@ var opt = {
   lib:           './lib',
   src:           './src',
   test:          './test',
-  testEspowered: './test-espowered'
+  testEspowered: './test-espowered',
+  npmbin:        './node_modules/.bin/'
+};
+
+var bin = {
+  tsc:   `${opt.npmbin}tsc`,
+  babel: `${opt.npmbin}babel`
 };
 
 /* clean */
@@ -24,13 +30,13 @@ gulp.task('clean', del.bind(null, [
 ]));
 
 /* ts */
-var tsc = 'tsc -t es5 -m commonjs --noImplicitAny --noEmitOnError';
-gulp.task('ts:src_', shell.task([`find ${opt.src} -name *.ts | xargs ${tsc}`]));
+var tsc = `${bin.tsc} -t es5 -m commonjs --noImplicitAny --noEmitOnError`;
+gulp.task('ts:src_', shell.task([`find ${opt.src} -name "*.ts" | xargs ${tsc}`]));
 gulp.task('ts:src',  function(done) {seq('clean', 'ts:src_', done)});
 gulp.task('ts',      function(done) {seq('clean', ['ts:src_'], done)});
 
 /* babel */
-gulp.task('babel:test', shell.task([`babel ${opt.test} --plugins babel-plugin-espower --out-dir ${opt.testEspowered}`]));
+gulp.task('babel:test', shell.task([`${bin.babel} ${opt.test} --plugins babel-plugin-espower --out-dir ${opt.testEspowered}`]));
 
 /* watch */
 gulp.task('exec-watch:test', ['test'], function() {
@@ -67,7 +73,11 @@ gulp.task('copy:src', function() {
   gulp.src(`${opt.src}/**/*.js`)
     .pipe(gulp.dest(opt.lib));
 });
-gulp.task('build:src', function(done) {seq(['clean', 'ts:src'], 'copy:src', done)});
+gulp.task('copy:dts', function() {
+  gulp.src(`./typings/cw-attrconv/cw-attrconv.d.ts`)
+    .pipe(gulp.dest('./'));
+});
+gulp.task('build:src', function(done) {seq('ts:src', ['copy:src', 'copy:dts'], done)});
 
 /* test */
 gulp.task('mocha', function() {

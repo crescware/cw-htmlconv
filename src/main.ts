@@ -16,15 +16,19 @@ interface ConvertMethodDefinition {
   newValue: string;
 }
 
+type PatternsForValue = {[pattern: string]: string};
+type PatternsForAttr = {[pattern: string]: string|[string, PatternsForValue]|ConvertMethodDefinition};
+type Attrs = {[key: string]: string};
+
 class Builder {
   input:    string;
   output:   string;
-  patterns: any;
+  patterns: PatternsForAttr;
 
   /**
    * @constructor
    */
-  constructor(input: string, patterns?: any) {
+  constructor(input: string, patterns?: PatternsForAttr) {
     this.input   = input;
     this.output  = '';
     this.patterns = patterns || {};
@@ -51,10 +55,10 @@ class Builder {
 
   /**
    * @param {string} tag
-   * @param {*} attrs
+   * @param {Attrs}  attrs
    * @returns {void}
    */
-  onOpenTag(tag: string, attrs: {[key: string]: string}) {
+  onOpenTag(tag: string, attrs: Attrs) {
     const converter = new Converter(tag, attrs, this.patterns);
     const convertedAttrs = converter.allAttributes();
     const outputTemp = (convertedAttrs)
@@ -119,17 +123,17 @@ class Converter {
    *   height: '42'
    * }
    */
-  attrs: any;
+  attrs: Attrs;
   attrKeys: string[];
 
-  patterns: any;
+  patterns: PatternsForAttr;
   targets: string[];
   applied: string[];
 
   /**
    * @constructor
    */
-  constructor(tag: string, attrs: any, patterns: any) {
+  constructor(tag: string, attrs: Attrs, patterns: PatternsForAttr) {
     this.tag = tag;
     this.attrs = attrs;
     this.patterns = patterns;
@@ -176,12 +180,12 @@ class Converter {
 
       if (typeName(want) === 'string' && re.test(attr)) {
         // If a type of the want is a string, only replacing an attribute.
-        attr = attr.replace(re, want);
+        attr = attr.replace(re, <string>want);
       }
       if (typeName(want) === 'Object' && re.test(attr)) {
         // If a type of the want is the object defined a convert method
         // converter will do the method
-        const def: ConvertMethodDefinition = want;
+        const def = <ConvertMethodDefinition>want;
 
         const alreadyApplied = this.applied.some(v => v === target);
         if (alreadyApplied) {
@@ -208,9 +212,10 @@ class Converter {
       if (typeName(want) === 'Array' && re.test(attr)) {
         // If a type of the want is an array, attribute is replaced by the want[0]
         // the want[1] is the patterns used to replace for a value
+        const want_ = <[string, PatternsForValue]>want;
         const originalAttr = attr;
-        const patternsForValue: any = want[1];
-        attr  = attr.replace(re, want[0]);
+        const patternsForValue = want_[1];
+        attr  = attr.replace(re, want_[0]);
         value = this.convertValue(patternsForValue, originalAttr, value, re);
       }
     });
@@ -300,12 +305,12 @@ function addDoctype(input: string, output: string): string {
 }
 
 /**
- * @param {string} input
- * @param {*}      pattern
+ * @param {string}          input
+ * @param {PatternsForAttr} patterns
  * @returns {Promise<string>}
  */
-export default function main(input: string, pattern?: any): Promise<string> {
-  const builder = new Builder(input, pattern);
+export default function main(input: string, patterns?: PatternsForAttr): Promise<string> {
+  const builder = new Builder(input, patterns);
   return builder.result().then((output: string) => {
     output = addDoctype(input, output);
     return Promise.resolve(output);
