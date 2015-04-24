@@ -11,12 +11,13 @@ var opt = {
   src:           './src',
   test:          './test',
   testEspowered: './test-espowered',
-  npmbin:        './node_modules/.bin/'
+  npmbin:        './node_modules/.bin'
 };
 
 var bin = {
-  tsc:   `${opt.npmbin}tsc`,
-  babel: `${opt.npmbin}babel`
+  tsc:        `${opt.npmbin}/tsc`,
+  babel:      `${opt.npmbin}/babel`,
+  browserify: `${opt.npmbin}/browserify`
 };
 
 /* clean */
@@ -77,7 +78,9 @@ gulp.task('copy:dts', function() {
   gulp.src(`./typings/cw-attrconv/cw-attrconv.d.ts`)
     .pipe(gulp.dest('./'));
 });
+gulp.task('build:standalone', shell.task([`${bin.browserify} -p licensify --standalone cwAttrconv ./index.js -o ./cw-attrconv.js`]));
 gulp.task('build:src', function(done) {seq('ts:src', ['copy:src', 'copy:dts'], done)});
+gulp.task('build', function(done) {seq('build:src', 'build:standalone', done)});
 
 /* test */
 gulp.task('mocha', function() {
