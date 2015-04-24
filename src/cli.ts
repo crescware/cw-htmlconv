@@ -45,7 +45,6 @@ const root = commandpost
       })
       .catch((err: any) => {
         console.error(err.stack);
-        process.exit(1);
       });
   });
 
