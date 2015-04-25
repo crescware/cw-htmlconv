@@ -1,4 +1,4 @@
-# cw-attrconv
+# cw-htmlconv
 
 [![Build Status](https://travis-ci.org/crescware/cw-attrconv.svg?branch=master)](https://travis-ci.org/crescware/cw-attrconv)
 
@@ -9,11 +9,11 @@ See `./test/main-spec.es6`.
 
 ### For Browser
 ```html
-<script src="./cw-attrconv.js"></script>
+<script src="./cw-htmlconv.js"></script>
 ```
 
 ```js
-var conv = cwAttrconv.default;
+var conv = cwHtmlconv.default;
 conv('<p>HTML</p>', {pattern: 'substr'}).then(function(result) {
   //
 });

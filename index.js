@@ -1,5 +1,5 @@
 /**
- * cw-attrconv
+ * cw-htmlconv
  * @copyright © 2015 Crescware
  */
 'use strict';

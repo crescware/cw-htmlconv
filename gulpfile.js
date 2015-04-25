@@ -78,9 +78,9 @@ gulp.task('copy:src', function () {
   gulp.src('' + opt.src + '/**/*.js').pipe(gulp.dest(opt.lib));
 });
 gulp.task('copy:dts', function () {
-  gulp.src('./typings/cw-attrconv/cw-attrconv.d.ts').pipe(gulp.dest('./'));
+  gulp.src('./typings/cw-htmlconv/cw-htmlconv.d.ts').pipe(gulp.dest('./'));
 });
-gulp.task('build:standalone', shell.task(['' + bin.browserify + ' -p licensify --standalone cwAttrconv ./index.js -o ./cw-attrconv.js']));
+gulp.task('build:standalone', shell.task(['' + bin.browserify + ' -p licensify --standalone cwHtmlconv ./index.js -o ./cw-htmlconv.js']));
 gulp.task('build:src', function (done) {
   return seq('ts:src', ['copy:src', 'copy:dts'], done);
 });

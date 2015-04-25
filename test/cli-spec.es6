@@ -11,7 +11,7 @@ const dir = {
 };
 
 describe('cli', () => {
-  const bin = path.resolve(process.cwd(), 'bin/cw-attrconv');
+  const bin = path.resolve(process.cwd(), 'bin/cw-htmlconv');
   const command = (process.platform === 'win32') ? `node ${bin}` : bin;
 
   before(() => {
@@ -22,7 +22,7 @@ describe('cli', () => {
     del.sync(dir.working);
   });
 
-  it('cw-attrconv [inputPath]', (done) => {
+  it('cw-htmlconv [inputPath]', (done) => {
     exec([command, ...[`${dir.fixtures}/input.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert.equal(stdout, `<!DOCTYPE html>
@@ -43,7 +43,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv [inputPath] -o [path]', (done) => {
+  it('cw-htmlconv [inputPath] -o [path]', (done) => {
     exec([command, ...[`${dir.fixtures}/input.html`, '-o', `${dir.working}/output01.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");
@@ -56,7 +56,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv [inputPath] -t [html] -o [path]', (done) => {
+  it('cw-htmlconv [inputPath] -t [html] -o [path]', (done) => {
     exec([command, ...[`${dir.fixtures}/input.html`, '-t', '\'<p>Hello</p>\'', '-o', `${dir.working}/output01.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");
@@ -70,7 +70,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv [inputPath] --patterns-text [text] -o [path]', (done) => {
+  it('cw-htmlconv [inputPath] --patterns-text [text] -o [path]', (done) => {
     exec([command, ...[`${dir.fixtures}/input.html`, '--patterns-text', '\'{\"src\": \"crs\"}\'', '-o', `${dir.working}/output02.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");
@@ -83,7 +83,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv [inputPath] -p [path] -o [path]', (done) => {
+  it('cw-htmlconv [inputPath] -p [path] -o [path]', (done) => {
     exec([command, ...[`${dir.fixtures}/input.html`, '-p', `${dir.fixtures}/patterns.json`, '-o', `${dir.working}/output03.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");
@@ -96,7 +96,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv -t [html] -o [path]', (done) => {
+  it('cw-htmlconv -t [html] -o [path]', (done) => {
     exec([command, ...['-t', '\'<p>Hello</p>\'', '-o', `${dir.working}/output04.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");
@@ -109,7 +109,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv -t [html] --patterns-text [text] -o [path]', (done) => {
+  it('cw-htmlconv -t [html] --patterns-text [text] -o [path]', (done) => {
     exec([command, ...['-t', '\'<img src="./image.jpg">\'', '--patterns-text', '\'{\"src\": \"crs\"}\'', '-o', `${dir.working}/output05.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");
@@ -122,7 +122,7 @@ describe('cli', () => {
     });
   });
 
-  it('cw-attrconv -t [html] -p [path] -o [path]', (done) => {
+  it('cw-htmlconv -t [html] -p [path] -o [path]', (done) => {
     exec([command, ...['-t', '\'<meta charset="UTF-8">\'', '-p', `${dir.fixtures}/patterns.json`, '-o', `${dir.working}/output06.html`]].join(' '), (err, stdout, stderr) => {
       assert(!err);
       assert(stdout ===  "");

@@ -1,6 +1,6 @@
 /// <reference path="../es6-promise/es6-promise.d.ts" />
 
-declare module cwAttrconv {
+declare module cwHtmlconv {
   interface ConvertMethodDefinition {
     method: string;
     newAttribute: string;
@@ -22,6 +22,6 @@ declare module cwAttrconv {
   export default function main(input: string, patterns?: PatternsForAttr): Promise<string>;
 }
 
-declare module 'cw-attrconv' {
-  export = cwAttrconv;
+declare module 'cw-htmlconv' {
+  export = cwHtmlconv;
 }
