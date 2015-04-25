@@ -1,17 +1,17 @@
 {
   "name": "cw-htmlconv",
-  "description": "Converter for HTML attributes",
+  "description": "Crescware HTML converter",
   "version": "0.2.0",
   "author": {
     "name": "Crescware",
     "email": "crescware@icloud.com",
     "url": "https://github.com/crescware"
   },
-  "bugs": {
-    "url": "https://github.com/crescware/cw-htmlconv/issues"
-  },
   "bin": {
     "cw-htmlconv": "./bin/cw-htmlconv"
+  },
+  "bugs": {
+    "url": "https://github.com/crescware/cw-htmlconv/issues"
   },
   "dependencies": {
     "commandpost": "^0.1.1",
