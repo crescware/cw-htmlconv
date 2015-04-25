@@ -1,6 +1,6 @@
 # cw-htmlconv
 
-[![Build Status](https://travis-ci.org/crescware/cw-attrconv.svg?branch=master)](https://travis-ci.org/crescware/cw-attrconv)
+[![Build Status](https://travis-ci.org/crescware/cw-htmlconv.svg?branch=master)](https://travis-ci.org/crescware/cw-htmlconv)
 
 Converter for HTML attributes.
 

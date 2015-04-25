@@ -8,7 +8,7 @@
     "url": "https://github.com/crescware"
   },
   "bugs": {
-    "url": "https://github.com/crescware/cw-attrconv/issues"
+    "url": "https://github.com/crescware/cw-htmlconv/issues"
   },
   "bin": {
     "cw-htmlconv": "./bin/cw-htmlconv"
@@ -36,7 +36,7 @@
     "run-sequence": "^1.0.2",
     "typescript": "^1.5.0-alpha"
   },
-  "homepage": "https://github.com/crescware/cw-attrconv",
+  "homepage": "https://github.com/crescware/cw-htmlconv",
   "keywords": [
     "attribute",
     "converter",
@@ -46,7 +46,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crescware/cw-attrconv.git"
+    "url": "https://github.com/crescware/cw-htmlconv.git"
   },
   "scripts": {
     "build": "gulp build",
