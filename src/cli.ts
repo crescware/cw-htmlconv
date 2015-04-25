@@ -2,7 +2,7 @@
 /// <reference path="../typings/commandpost/commandpost.d.ts" />
 import * as commandpost from 'commandpost';
 import * as fs from 'fs';
-import attrconv from './main';
+import htmlconv from './main';
 
 interface RootOptions {
   encoding: string[];
@@ -18,7 +18,7 @@ interface RootArgs {
 
 const pkg = require('../package.json');
 const root = commandpost
-  .create<RootOptions, RootArgs>('cw-attrconv [inputPath]')
+  .create<RootOptions, RootArgs>('cw-htmlconv [inputPath]')
   .version(pkg.version, '-v, --version')
   .option('-o, --out [path]', 'Output to single file')
   .option('-p, --patterns [path]', 'JSON file of Definition for convert patterns')
@@ -34,7 +34,7 @@ const root = commandpost
 
     Promise.all([textPromise, patternsPromise])
       .then((values: any[]) => {
-        return attrconv(values[0]/* text */, values[1]/* pattern */);
+        return htmlconv(values[0]/* text */, values[1]/* pattern */);
       })
       .then((out: string) => {
         if (!opts.out[0]) {
