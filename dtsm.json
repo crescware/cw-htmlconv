@@ -20,6 +20,12 @@
     "es6-promise/es6-promise.d.ts": {
       "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
     },
+    "cheerio/cheerio.d.ts": {
+      "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
+    },
+    "lodash/lodash.d.ts": {
+      "ref": "25da006de5de3d2e31252fdc988296c7c212f231"
+    },
     "commandpost/commandpost.d.ts": {
       "repo": "https://github.com/vvakame/commandpost.git",
       "ref": "cbca04b84c56f9991c5a7fca87cfd6beda47bfd0",

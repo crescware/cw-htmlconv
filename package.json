@@ -14,9 +14,11 @@
     "url": "https://github.com/crescware/cw-htmlconv/issues"
   },
   "dependencies": {
+    "cheerio": "^0.19.0",
     "commandpost": "^0.1.1",
     "es6-promise": "^2.1.0",
-    "htmlparser2": "^3.8.2",
+    "htmlparser2": "^3.8.1",
+    "lodash": "^3.2.0",
     "type-name": "^1.0.1"
   },
   "devDependencies": {
