@@ -2,7 +2,7 @@
 /// <reference path="../typings/commandpost/commandpost.d.ts" />
 import * as commandpost from 'commandpost';
 import * as fs from 'fs';
-import htmlconv from './main';
+import htmlconv from './legacy-main';
 
 interface RootOptions {
   encoding: string[];
