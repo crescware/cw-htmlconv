@@ -19,13 +19,20 @@ interface CwHtmlconvExtended extends CheerioElement {
 }
 
 interface AllPatterns {
-  [selector: string]: {
-    attr?: Patterns;
-  }
+  [selector: string]: PatternsEachSelector;
+}
+
+interface PatternsEachSelector {
+  attr?: Patterns;
+  textWithSelector?: TextPatterns;
 }
 
 interface Patterns {
   [pattern: string]: string|ReplaceParam;
+}
+
+interface TextPatterns {
+  [selector: string]: Patterns
 }
 
 interface ReplaceParam {
@@ -484,9 +491,9 @@ class Traverser {
 /**
  * @param {string}      selector
  * @param {AllPatterns} allPatterns
- * @returns {Patterns}
+ * @returns {PatternsEachSelector}
  */
-function pickPatterns(selector: string, allPatterns: AllPatterns): {attr?: Patterns} {
+function pickPatterns(selector: string, allPatterns: AllPatterns): PatternsEachSelector {
   return allPatterns[selector] || {};
 }
 
@@ -512,15 +519,48 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
       selectorAttrRegExp = originalSelector.match(selectorPattern)[1];
     }
 
-    $(selector).each((i: number, elm: CwHtmlconvExtended) => {
-      if (!Object.keys(elm.attribs).length) {return}
-      lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        const patterns = pickPatterns(originalSelector || selector, allPatterns).attr;
-        if (!elm) {return}
-        const traverser = new Traverser(elm, attr, value);
-        elm = traverser.traverse(patterns, selectorAttrRegExp);
+    const attrPatterns = pickPatterns(originalSelector || selector, allPatterns).attr;
+    const textPatterns = pickPatterns(originalSelector || selector, allPatterns).textWithSelector;
+    if (attrPatterns) {
+      $(selector).each((i: number, elm: CwHtmlconvExtended) => {
+        if (!Object.keys(elm.attribs).length) {return}
+        lodash.forEach(elm.attribs, (value: string, attr: string) => {
+          if (!elm) {return}
+          const traverser = new Traverser(elm, attr, value);
+          elm = traverser.traverse(attrPatterns, selectorAttrRegExp);
+        });
       });
-    });
+    }
+    if (textPatterns) {
+      let matched = false;
+      $(selector).each((i: number, elm: CwHtmlconvExtended) => {
+        matched = lodash.some(Object.keys(elm.attribs), (attr: string) => {
+          return Converter.pickRegExp(Converter.treatPatternParam(selectorAttrRegExp)).test(attr);
+        });
+      });
+
+      if (matched) {
+        const selectors = Object.keys(textPatterns);
+        lodash.forEach(selectors, (selector: string) => {
+          $(selector).each((i: number, elm: CwHtmlconvExtended) => {
+            const traversingTextNode = (elm: CwHtmlconvExtended) => {
+              lodash.forEach(elm.children, (child: CwHtmlconvExtended) => {
+                if (child.type !== 'text') {
+                  traversingTextNode(elm);
+                }
+                lodash.forEach(textPatterns[selector], (replaceParam_: string|ReplaceParam, pattern_: string) => {
+                  const replaceParam = Converter.treatReplaceParam(replaceParam_);
+                  const pattern = Converter.treatPatternParam(pattern_);
+                  const replaced = Converter.replace(child.data, pattern, replaceParam);
+                  child.data = replaced;
+                })
+              });
+            };
+            traversingTextNode(elm);
+          });
+        });
+      }
+    }
   });
 
   let forceEmpty: [string, string][] = [];

@@ -438,6 +438,44 @@ describe('main', () => {
   );
 
   parameterized(
+    `<p>Name: {{firstName.value}}</p>
+  <input type="text" #first-name (keyup)>`,
+    `<p>Name: {{ngModel.firstName}}</p>
+  <input type="text" ng-model="ngModel.firstName">`,
+    {
+      '*': {
+        attr: {
+          '/^#(.*)$/': {
+            replace: 'ng-model',
+            value: {
+              '/^.*$/': {
+                replace: 'ngModel.%a1',
+                manipulation: {
+                  '%a1': 'camelize'
+                }
+              }
+            }
+          }
+        }
+      },
+      'input[/^#(.*)$/]': {
+        attr: {
+          '(keyup)': {
+            remove: true
+          }
+        },
+        textWithSelector: {
+          '*': {
+            '/{{(.*)\.value}}/': {
+              replace: '{{ngModel.$1}}'
+            }
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
     `<div class="view" [class.hidden]="todoEdit == todo"></div>`,
     `<div class="view" ng-class="{hidden: todoEdit == todo}"></div>`,
     {
