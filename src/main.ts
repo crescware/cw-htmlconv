@@ -15,8 +15,14 @@ interface CwHtmlconvExtended extends CheerioElement {
   };
 }
 
+interface AllPatterns {
+  [selector: string]: {
+    attr?: Patterns;
+  }
+}
+
 interface Patterns {
-  [pattern: string]: string;
+  [pattern: string]: string|ReplaceParam;
 }
 
 interface ReplaceParam {
@@ -256,24 +262,23 @@ class Traverser {
   }
 
   /**
-   * @param {*} attrPatterns
+   * @param {Patterns} attrPatterns
    * @returns {CwHtmlconvExtended}
    */
-  traverse(attrPatterns: any): CwHtmlconvExtended {
+  traverse(attrPatterns: Patterns): CwHtmlconvExtended {
     this.convertAttr(attrPatterns);
     return this.elm;
   }
 
   /**
-   * @param {*} attrPatterns
+   * @param {Patterns} attrPatterns
    * @returns {void}
    */
-  private convertAttr(attrPatterns: any) {
+  private convertAttr(attrPatterns: Patterns) {
     const _Converter = AttributeConverter;
-    const patterns   = {attr: attrPatterns};
     const cb = (replaceParam: AttributeReplaceParam, _attr: string) => this.convertValue(replaceParam, _attr);
 
-    this.convert(_Converter, patterns, this.attr, cb);
+    this.convert(_Converter, attrPatterns, this.attr, cb);
   }
 
   /**
@@ -285,36 +290,20 @@ class Traverser {
     if (!replaceParam.value) {return}
 
     const _Converter = ValueConverter;
-    const patterns   = {value: replaceParam.value};
     const cb = () => {/*noop*/};
 
-    this.convert(_Converter, patterns, attr, cb);
-  }
-
-  /**
-   * @param {*} patterns
-   * @returns {*}
-   */
-  private pickPatterns(patterns: {attr?: any; value?: any}): any {
-    if (patterns.attr) {
-      return patterns.attr;
-    }
-    if (patterns.value) {
-      return patterns.value;
-    }
-
-    throw new Error('Invalid patterns');
+    this.convert(_Converter, replaceParam.value, attr, cb);
   }
 
   /**
    * @param {Function} _Converter
-   * @param {*}        patterns
+   * @param {Patterns} patterns
    * @param {string}   attr
    * @param {Function} cb
    * @returns {void}
    */
-  private convert(_Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: AttributeReplaceParam, attr: string) => void) {
-    lodash.forEach(this.pickPatterns(patterns), (rawReplace: string|ReplaceParam, rawPattern: string) => {
+  private convert(_Converter: typeof Converter, patterns: Patterns, attr: string, cb?: (rep: AttributeReplaceParam, attr: string) => void) {
+    lodash.forEach(patterns, (rawReplace: string|ReplaceParam, rawPattern: string) => {
       const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern);
       this.elm = converter.convert();
     });
@@ -322,20 +311,20 @@ class Traverser {
 }
 
 /**
- * @param {string} selector
- * @param {*} patterns
- * @returns {*}
+ * @param {string}      selector
+ * @param {AllPatterns} allPatterns
+ * @returns {Patterns}
  */
-function pickAttrPatterns(selector: string, patterns: any): any {
-  return patterns[selector].attr || {};
+function pickAttrPatterns(selector: string, allPatterns: AllPatterns): Patterns {
+  return allPatterns[selector].attr || {};
 }
 
 /**
- * @param {string}          input
- * @param {PatternsForAttr} allPatterns
+ * @param {string}      input
+ * @param {AllPatterns} allPatterns
  * @returns {string}
  */
-export default function main(input: string, allPatterns?: any): string {
+export default function main(input: string, allPatterns?: AllPatterns): string {
   const isEmpty = allPatterns === void 0 || allPatterns === null || !Object.keys(allPatterns).length;
   if (isEmpty) {return input}
 
