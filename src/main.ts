@@ -32,6 +32,13 @@ function replaceParam(rep: string|AttributeReplace): AttributeReplace {
   return <AttributeReplace>rep;
 }
 
+function cacheReplaced(elm: any, attr: string, value: string) {
+  elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
+  elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
+  elm._cwHtmlconvReplaced.attribs[attr] = value;
+  return elm;
+}
+
 /**
  * @param {string}          input
  * @param {PatternsForAttr} patterns
@@ -50,8 +57,8 @@ export default function main(input: string, patterns?: any): string {
 
     $(selector).each((i: number, elm: any) => {
       console.log(elm.attribs);
-      lodash.forEach(attrPatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
-        lodash.forEach(elm.attribs, (value: string, attr: string) => {
+      lodash.forEach(elm.attribs, (value: string, attr: string) => {
+        lodash.forEach(attrPatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
           const attrRep = replaceParam(rawReplace);
           const attrPattern = regExpOrSubstr(rawPattern);
           const attrTestRegExp = attrPattern.re || new RegExp(attrPattern.substr);
@@ -61,9 +68,7 @@ export default function main(input: string, patterns?: any): string {
             const replacedAttr = (attrPattern.re)
               ? attr.replace(attrPattern.re,     attrRep.replace)
               : attr.replace(attrPattern.substr, attrRep.replace);
-            elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
-            elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
-            elm._cwHtmlconvReplaced.attribs[replacedAttr] = value;
+            elm = cacheReplaced(elm, replacedAttr, value);
 
             const valuePatterns = attrRep.value;
             if (valuePatterns) {
@@ -75,9 +80,7 @@ export default function main(input: string, patterns?: any): string {
                   const replacedValue = (valuePattern.re)
                     ? value.replace(valuePattern.re,     valueRep.replace)
                     : value.replace(valuePattern.substr, valueRep.replace);
-                  elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
-                  elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
-                  elm._cwHtmlconvReplaced.attribs[replacedAttr] = replacedValue;
+                  elm = cacheReplaced(elm, replacedAttr, replacedValue);
                 }
               });
             }
