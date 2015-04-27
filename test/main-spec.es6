@@ -74,4 +74,24 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<a href="./">漢字</a>`,
+    `<a conv="./">&#x6F22;&#x5B57;</a>`,
+    {
+      '*': {
+        attr: {'href': 'conv'}
+      }
+    }
+  );
+
+  parameterized(
+    `<a href="./">Text</a>`,
+    `<a refref="./">Text</a>`,
+    {
+      '*': {
+        attr: {'/h(.*)/': '$1$1'}
+      }
+    }
+  );
 });
