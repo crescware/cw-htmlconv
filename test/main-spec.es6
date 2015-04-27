@@ -176,4 +176,44 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<a href="foo">Text</a>`,
+    `<a conv="bar">Text</a>`,
+    {
+      '*': {
+        attr: {href: {
+          replace: 'conv',
+          value: {foo: 'bar'}
+        }}
+      }
+    }
+  );
+
+  parameterized(
+    `<a href="foo">Text</a><a href="baz">Text</a>`,
+    `<a conv="bar">Text</a><a conv="qux">Text</a>`,
+    {
+      '*': {
+        attr: {
+          href: {
+            replace: 'conv',
+            value: {foo: 'bar', baz: 'qux'}
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
+    `<input (click)="action()">`,
+    `<input ng-click="action()">`,
+    {
+      '*': {
+        attr: {
+          '/^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$/': 'ng-$1'
+        }
+      }
+    }
+  );
 });
