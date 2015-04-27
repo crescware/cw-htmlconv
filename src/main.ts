@@ -8,6 +8,12 @@ import * as htmlparser from 'htmlparser2';
 import * as cheerio from 'cheerio';
 import * as lodash from 'lodash';
 
+interface CwHtmlconvExtended extends CheerioElement {
+  _cwHtmlconvReplaced: {
+    attribs?: {[attr: string]: string};
+  };
+}
+
 /**
  * @param {string} pattern
  * @returns {{re: RegExp, substr: string}}
@@ -32,14 +38,14 @@ function replaceParam(rep: string|AttributeReplace): AttributeReplace {
   return <AttributeReplace>rep;
 }
 
-function cacheReplaced(elm: any, attr: string, value: string) {
+function cacheReplaced(elm: CwHtmlconvExtended, attr: string, value: string) {
   elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
   elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
   elm._cwHtmlconvReplaced.attribs[attr] = value;
   return elm;
 }
 
-function convert(elm: any, patterns: {attr?: any; value?: any}, attr: string, value: string, cb?: (rep: AttributeReplace, attr: string) => void) {
+function convert(elm: CwHtmlconvExtended, patterns: {attr?: any; value?: any}, attr: string, value: string, cb?: (rep: AttributeReplace, attr: string) => void) {
   var target: string;
   var usePatterns: any;
   var cachingAttr: Function;
@@ -91,9 +97,8 @@ export default function main(input: string, patterns?: any): string {
 
   lodash.forEach(selectors, (selector: string) => {
     const attrPatterns = patterns[selector].attr || {};
-    const attrPatternsKeys = Object.keys(attrPatterns);
 
-    $(selector).each((i: number, elm: any) => {
+    $(selector).each((i: number, elm: CwHtmlconvExtended) => {
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
         elm = convert(elm, {attr: attrPatterns}, attr, value, (rep: AttributeReplace, attr: string) => {
           const valuePatterns = rep.value;
@@ -105,7 +110,7 @@ export default function main(input: string, patterns?: any): string {
     });
   });
 
-  $('*').each((i: number, elm: any) => {
+  $('*').each((i: number, elm: CwHtmlconvExtended) => {
     if (!elm._cwHtmlconvReplaced) {return}
     if (elm._cwHtmlconvReplaced.attribs) {
       elm.attribs = elm._cwHtmlconvReplaced.attribs;
