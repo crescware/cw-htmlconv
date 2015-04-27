@@ -30,6 +30,7 @@ interface Patterns {
 
 interface ReplaceParam {
   replace: string;
+  remove?: boolean;
   manipulation?: {
     [match: string]: string;
   };
@@ -62,6 +63,11 @@ interface ParentMatch {
   v?: string[]; // value match
 }
 
+interface ConverterOptions {
+  parentMatch?: ParentMatch;
+  selectorAttrRegExp?: string;
+}
+
 type ConverterCallback = (rep: AttributeReplaceParam, attr: string, parentMatch: ParentMatch) => void;
 
 class Converter {
@@ -70,6 +76,7 @@ class Converter {
 
   target: string;
   match: string[];
+  selectorAttrRegExp: RegExp;
 
   /**
    * @constructor
@@ -81,10 +88,11 @@ class Converter {
     public convertCallback: ConverterCallback,
     replaceParam: string|ReplaceParam,
     pattern: string,
-    public parentMatch?: ParentMatch
+    public options?: ConverterOptions
   ) {
     this.replaceParam = Converter.treatReplaceParam(replaceParam);
     this.pattern = Converter.treatPatternParam(pattern);
+    this.selectorAttrRegExp = Converter.pickRegExp(Converter.treatPatternParam(this.options.selectorAttrRegExp));
 
     this.initCache();
   }
@@ -100,17 +108,10 @@ class Converter {
   }
 
   /**
-   * @returns {RegExp}
-   */
-  private pickRegExp(): RegExp {
-    return this.pattern.re || new RegExp(this.pattern.substr);
-  }
-
-  /**
    * @returns {boolean}
    */
   private targetToMatchThePattern(): boolean {
-    const re = this.pickRegExp();
+    const re = Converter.pickRegExp(this.pattern);
     if (!re.test(this.target)) {return false}
 
     this.match = this.target.match(re) || [];
@@ -136,10 +137,19 @@ class Converter {
       }
     }
 
-    const replaced = Converter.replace(this.target, this.pattern, this.replaceParam, this.parentMatch);
+    let replaced = '';
+    try {
+      replaced = Converter.replace(this.target, this.pattern, this.replaceParam, this.options.parentMatch);
+    } catch (e) {
+      if (this.replaceParam.remove) {
+        // Remove from the already processed
+        this.updateProcessedAttribs();
+      }
+      return;
+    }
+
     this.cache(this.attrForCache(replaced), this.valueForCache(replaced));
     this.addReplacedPattern(this.target);
-
     this.updateProcessedAttribs();
 
     // Run replacement for value
@@ -155,7 +165,7 @@ class Converter {
     const replacedAttr = Converter.replace(this.target, this.pattern, replaceParam);
 
     let values: string[] = [];
-    const reAttr = this.pickRegExp();
+    const reAttr = Converter.pickRegExp(this.pattern);
     const patternParam = Converter.treatPatternParam(replaceParam.valuePattern);
     const replace = {replace: replaceParam.valueReplace};
     lodash.forEach(this.elm.attribs, (value: string, attr: string) => {
@@ -232,6 +242,10 @@ class Converter {
    * @returns {{re: RegExp, substr: string}}
    */
   static treatPatternParam(pattern: string): PatternParam {
+    if (!pattern) {
+      return {re: void 0, substr: void 0}
+    }
+
     let re: RegExp;
     let substr = '';
     if (pattern[0] === '/' && pattern[pattern.length - 1] === '/') {
@@ -241,6 +255,14 @@ class Converter {
     }
 
     return {re: re, substr: substr};
+  }
+
+  /**
+   * @param {PatternParam} pattern
+   * @returns {RegExp}
+   */
+  static pickRegExp(pattern: PatternParam): RegExp {
+    return pattern.re || new RegExp(pattern.substr);
   }
 
   /**
@@ -256,6 +278,10 @@ class Converter {
     }
 
     let want = rep.replace;
+    if (!want) {
+      throw new Error('rep.replace not defined');
+    }
+
     const parentMatchSyntax = want.match(/%a(\d)/g);
     if (/*has*/parentMatchSyntax) {
       lodash.forEach(parentMatch.a, (match: string, i: number) => {
@@ -299,9 +325,9 @@ class AttributeConverter extends Converter {
     public convertCallback: ConverterCallback,
     replace: string|ReplaceParam,
     pattern: string,
-    parentMatch?: ParentMatch
+    options?: ConverterOptions
   ) {
-    super(elm, attr, value, convertCallback, replace, pattern, parentMatch);
+    super(elm, attr, value, convertCallback, replace, pattern, options);
     this.target = this.attr;
   }
 
@@ -333,9 +359,9 @@ class ValueConverter extends Converter {
     public convertCallback: ConverterCallback,
     replace: string|ReplaceParam,
     pattern: string,
-    parentMatch?: ParentMatch
+    options?: ConverterOptions
   ) {
-    super(elm, attr, value, convertCallback, replace, pattern, parentMatch);
+    super(elm, attr, value, convertCallback, replace, pattern, options);
     this.target = this.value;
   }
 
@@ -370,22 +396,27 @@ class Traverser {
 
   /**
    * @param {Patterns} attrPatterns
+   * @param {string}   selectorAttrRegExp
    * @returns {CwHtmlconvExtended}
    */
-  traverse(attrPatterns: Patterns): CwHtmlconvExtended {
-    this.convertAttr(attrPatterns);
+  traverse(attrPatterns: Patterns, selectorAttrRegExp: string): CwHtmlconvExtended {
+    this.convertAttr(attrPatterns, selectorAttrRegExp);
     return this.elm;
   }
 
   /**
    * @param {Patterns} attrPatterns
+   * @param {string}   selectorAttrRegExp
    * @returns {void}
    */
-  private convertAttr(attrPatterns: Patterns) {
+  private convertAttr(attrPatterns: Patterns, selectorAttrRegExp: string) {
     const _Converter = AttributeConverter;
     const cb: ConverterCallback = (replaceParam, _attr, parentMatch) => this.convertValue(replaceParam, _attr, parentMatch);
 
-    this.convert(_Converter, attrPatterns, this.attr, cb);
+    const options = {
+      selectorAttrRegExp: selectorAttrRegExp
+    };
+    this.convert(_Converter, attrPatterns, this.attr, cb, options);
   }
 
   /**
@@ -405,7 +436,10 @@ class Traverser {
     const _Converter = ValueConverter;
     const cb = () => {/*noop*/};
 
-    this.convert(_Converter, replaceParam.value, attr, cb, parentMatch);
+    const options = {
+      parentMatch: parentMatch
+    };
+    this.convert(_Converter, replaceParam.value, attr, cb, options);
   }
 
   /**
@@ -413,12 +447,12 @@ class Traverser {
    * @param {Patterns} patterns
    * @param {string}   attr
    * @param {Function} cb
-   * @param {Array<string>} [parentMatch]
+   * @param {*} [options]
    * @returns {void}
    */
-  private convert(_Converter: typeof Converter, patterns: Patterns, attr: string, cb: ConverterCallback, parentMatch?: ParentMatch) {
+  private convert(_Converter: typeof Converter, patterns: Patterns, attr: string, cb: ConverterCallback, options?: ConverterOptions) {
     lodash.forEach(patterns, (rawReplace: string|ReplaceParam, rawPattern: string) => {
-      const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern, parentMatch);
+      const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern, options);
       this.elm = converter.convert();
     });
   }
@@ -446,22 +480,31 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
   const selectors = Object.keys(allPatterns);
 
   lodash.forEach(selectors, (selector: string) => {
+    let selectorAttrRegExp = '';
+    let originalSelector: string = void 0;
+    const selectorPattern = /^.*\[(\/.*\/)]/;
+    if (selectorPattern.test(selector)) {
+      originalSelector = selector;
+      selector = selector.split('[')[0];
+      selectorAttrRegExp = originalSelector.match(selectorPattern)[1];
+    }
+
     $(selector).each((i: number, elm: CwHtmlconvExtended) => {
       if (!Object.keys(elm.attribs).length) {return}
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        const patterns = pickAttrPatterns(selector, allPatterns);
+        const patterns = pickAttrPatterns(originalSelector || selector, allPatterns);
         const traverser = new Traverser(elm, attr, value);
-        elm = traverser.traverse(patterns);
+        elm = traverser.traverse(patterns, selectorAttrRegExp);
       });
     });
   });
 
-  let forceEmpty: {[attr: string]: string} = {};
+  let forceEmpty: [string, string][] = [];
   $('*').each((i: number, elm: CwHtmlconvExtended) => {
     if (!elm._cwHtmlconvProcessed) {return}
     if (Object.keys(elm._cwHtmlconvProcessed.emptyValueToken).length) {
       lodash.forEach(elm._cwHtmlconvProcessed.emptyValueToken, (token: string, attr: string) => {
-        forceEmpty[attr] = token;
+        forceEmpty.push([attr, token]);
       })
     }
     if (elm._cwHtmlconvProcessed.attribs) {
@@ -469,10 +512,10 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
     }
   });
 
-  if (Object.keys(forceEmpty).length) {
+  if (forceEmpty.length) {
     let output = $.html();
-    lodash.forEach(forceEmpty, (token: string, attr: string) => {
-      output = output.replace(`${attr}="${token}"`, attr);
+    lodash.forEach(forceEmpty, (v: [string, string]) => {
+      output = output.replace(`${v[0]}="${v[1]}"`, v[0]);
     });
     return output;
   }
