@@ -153,14 +153,14 @@ class Converter {
   /**
    * @abstract
    */
-  attrForCache(_: any): string {
+  protected attrForCache(_: any): string {
     return '';
   }
 
   /**
    * @abstract
    */
-  valueForCache(_: any): string {
+  protected valueForCache(_: any): string {
     return '';
   }
 
@@ -197,7 +197,7 @@ class AttributeConverter extends Converter {
    * @param {string} replaced
    * @returns {string}
    */
-  attrForCache(replaced: string): string {
+  protected attrForCache(replaced: string): string {
     return replaced;
   }
 
@@ -205,7 +205,7 @@ class AttributeConverter extends Converter {
    * @param {*} _ non-use
    * @returns {string}
    */
-  valueForCache(_: any): string {
+  protected valueForCache(_: any): string {
     return this.value;
   }
 }
@@ -230,7 +230,7 @@ class ValueConverter extends Converter {
    * @param {*} _ non-use
    * @returns {string}
    */
-  attrForCache(_: any): string {
+  protected attrForCache(_: any): string {
     return this.attr;
   }
 
@@ -238,7 +238,7 @@ class ValueConverter extends Converter {
    * @param {string} replaced
    * @returns {string}
    */
-  valueForCache(replaced: string): string {
+  protected valueForCache(replaced: string): string {
     return replaced;
   }
 }
