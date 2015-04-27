@@ -12,6 +12,7 @@ interface CwHtmlconvExtended extends CheerioElement {
   _cwHtmlconvProcessed: {
     attribs?: {[attr: string]: string};
     alreadyReplaced?: {[target: string]: boolean};
+    emptyValueToken?: {[attr: string]: string};
   };
 }
 
@@ -30,7 +31,8 @@ interface ReplaceParam {
 }
 
 interface AttributeReplaceParam extends ReplaceParam {
-  value?: Patterns
+  value?: Patterns;
+  emptyValue?: boolean;
 }
 
 interface AttributeReplaceMethodParam extends ReplaceParam {
@@ -89,6 +91,7 @@ class Converter {
     this.elm._cwHtmlconvProcessed                 = this.elm._cwHtmlconvProcessed || {};
     this.elm._cwHtmlconvProcessed.attribs         = this.elm._cwHtmlconvProcessed.attribs || {};
     this.elm._cwHtmlconvProcessed.alreadyReplaced = this.elm._cwHtmlconvProcessed.alreadyReplaced || {};
+    this.elm._cwHtmlconvProcessed.emptyValueToken = this.elm._cwHtmlconvProcessed.emptyValueToken || {};
   }
 
   /**
@@ -223,8 +226,8 @@ class Converter {
    * @returns {{re: RegExp, substr: string}}
    */
   static treatPatternParam(pattern: string): PatternParam {
-    var re: RegExp;
-    var substr = '';
+    let re: RegExp;
+    let substr = '';
     if (pattern[0] === '/' && pattern[pattern.length - 1] === '/') {
       re = new RegExp(pattern.substring(1, pattern.length - 1));
     } else {
@@ -245,8 +248,8 @@ class Converter {
     if (parentMatch && !parentMatch.hasOwnProperty('a') && !parentMatch.hasOwnProperty('v')) {
       throw new Error('invalid parentMatch');
     }
-    var want = rep.replace;
 
+    let want = rep.replace;
     const parentMatchSyntax = want.match(/%a(\d)/g);
     if (/*has*/parentMatchSyntax) {
       lodash.forEach(parentMatch.a, (match, i) => {
@@ -367,6 +370,11 @@ class Traverser {
    * @returns {void}
    */
   private convertValue(replaceParam: AttributeReplaceParam, attr: string, parentMatch: ParentMatch) {
+    if (replaceParam.emptyValue) {
+      this.elm._cwHtmlconvProcessed.emptyValueToken[attr] = Math.random().toString(36).slice(-8);
+      this.elm._cwHtmlconvProcessed.attribs[attr] = this.elm._cwHtmlconvProcessed.emptyValueToken[attr];
+      return;
+    }
     if (!replaceParam.value) {return}
 
     const _Converter = ValueConverter;
@@ -423,12 +431,26 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
     });
   });
 
+  let forceEmpty: {[attr: string]: string} = {};
   $('*').each((i: number, elm: CwHtmlconvExtended) => {
     if (!elm._cwHtmlconvProcessed) {return}
+    if (Object.keys(elm._cwHtmlconvProcessed.emptyValueToken).length) {
+      lodash.forEach(elm._cwHtmlconvProcessed.emptyValueToken, (token, attr) => {
+        forceEmpty[attr] = token;
+      })
+    }
     if (elm._cwHtmlconvProcessed.attribs) {
       elm.attribs = elm._cwHtmlconvProcessed.attribs;
     }
   });
+
+  if (Object.keys(forceEmpty).length) {
+    let output = $.html();
+    lodash.forEach(forceEmpty, (token, attr) => {
+      output = output.replace(`${attr}="${token}"`, attr);
+    })
+    return output;
+  }
 
   return $.html();
 }

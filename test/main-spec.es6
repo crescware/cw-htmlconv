@@ -66,6 +66,11 @@ describe('main', () => {
   );
 
   parameterized(
+    `<select><option selected>Hello</option></select>`,
+    `<select><option selected>Hello</option></select>`
+  );
+
+  parameterized(
     `<a href="./">Text</a>`,
     `<a conv="./">Text</a>`,
     {
@@ -81,6 +86,35 @@ describe('main', () => {
     {
       '*': {
         attr: {'href': 'conv'}
+      }
+    }
+  );
+
+  parameterized(
+    `<select><option selected>Hello</option></select>`,
+    `<select><option replaced="">Hello</option></select>`,
+    {
+      '*': {
+        attr: {
+          'selected': {
+            replace: 'replaced'
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
+    `<select><option selected>Hello</option></select>`,
+    `<select><option replaced>Hello</option></select>`,
+    {
+      '*': {
+        attr: {
+          'selected': {
+            replace: 'replaced',
+            emptyValue: true
+          }
+        }
       }
     }
   );
