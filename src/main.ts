@@ -94,8 +94,8 @@ class Converter {
    * @returns {boolean}
    */
   private targetToMatchThePattern(): boolean {
-    const testRegExp = this.pattern.re || new RegExp(this.pattern.substr);
-    return testRegExp.test(this.target);
+    const re = this.pattern.re || new RegExp(this.pattern.substr);
+    return re.test(this.target);
   }
 
   /**
@@ -109,15 +109,15 @@ class Converter {
       }
       return this.elm;
     }
-    
+
     const replaced = this.replace(this.target, this.pattern, this.replaceParam);
-    this.cache(this.cachingAttr(replaced), this.cachingValue(replaced));
-    this.addProcessedPattern(this.target);
+    this.cache(this.attrForCache(replaced), this.valueForCache(replaced));
+    this.addReplacedPattern(this.target);
 
     this.updateProcessedAttribs();
 
     // Run replacement for value
-    this.convertCallback(this.replaceParam, this.cachingAttr(replaced));
+    this.convertCallback(this.replaceParam, this.attrForCache(replaced));
     return this.elm;
   }
 
@@ -146,7 +146,7 @@ class Converter {
    * @param {string} target
    * @returns {void}
    */
-  private addProcessedPattern(target: string) {
+  private addReplacedPattern(target: string) {
     this.elm._cwHtmlconvProcessed.alreadyReplaced[target] = true;
   }
 
@@ -165,14 +165,14 @@ class Converter {
   /**
    * @abstract
    */
-  cachingAttr(_: any): string {
+  attrForCache(_: any): string {
     return '';
   }
 
   /**
    * @abstract
    */
-  cachingValue(_: any): string {
+  valueForCache(_: any): string {
     return '';
   }
 }
@@ -197,7 +197,7 @@ class AttributeConverter extends Converter {
    * @param {string} replaced
    * @returns {string}
    */
-  cachingAttr(replaced: string): string {
+  attrForCache(replaced: string): string {
     return replaced;
   }
 
@@ -205,7 +205,7 @@ class AttributeConverter extends Converter {
    * @param {*} _ non-use
    * @returns {string}
    */
-  cachingValue(_: any): string {
+  valueForCache(_: any): string {
     return this.value;
   }
 }
@@ -230,7 +230,7 @@ class ValueConverter extends Converter {
    * @param {*} _ non-use
    * @returns {string}
    */
-  cachingAttr(_: any): string {
+  attrForCache(_: any): string {
     return this.attr;
   }
 
@@ -238,7 +238,7 @@ class ValueConverter extends Converter {
    * @param {string} replaced
    * @returns {string}
    */
-  cachingValue(replaced: string): string {
+  valueForCache(replaced: string): string {
     return replaced;
   }
 }
@@ -260,10 +260,12 @@ class Traverser {
    * @returns {CwHtmlconvExtended}
    */
   traverse(): CwHtmlconvExtended {
-    this.convert(AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
+    const patterns = {attr: this.attrPatterns};
+    this.convert(AttributeConverter, patterns, this.attr, (rep, _attr) => {
       const valuePatterns = rep.value;
       if (valuePatterns) {
-        this.convert(ValueConverter, {value: valuePatterns}, _attr, () => {/*noop*/});
+        const patterns = {value: valuePatterns};
+        this.convert(ValueConverter, patterns, _attr, () => {/*noop*/});
       }
     });
 
@@ -292,7 +294,7 @@ class Traverser {
    * @param {Function} cb
    * @returns {void}
    */
-  private convert(_Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
+  private convert(_Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: AttributeReplaceParam, attr: string) => void) {
     lodash.forEach(this.pickPatterns(patterns), (rawReplace: string|ReplaceParam, rawPattern: string) => {
       const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern);
       this.elm = converter.convert();
