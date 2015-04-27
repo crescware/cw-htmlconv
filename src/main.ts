@@ -110,7 +110,7 @@ class Converter {
       return this.elm;
     }
 
-    const replaced = this.replace(this.target, this.pattern, this.replaceParam);
+    const replaced = Converter.replace(this.target, this.pattern, this.replaceParam);
     this.cache(this.attrForCache(replaced), this.valueForCache(replaced));
     this.addReplacedPattern(this.target);
 
@@ -151,18 +151,6 @@ class Converter {
   }
 
   /**
-   * @param {string}       original
-   * @param {PatternParam} pattern
-   * @param {ReplaceParam} rep
-   * @returns {string}
-   */
-  private replace(original: string, pattern: PatternParam, rep: ReplaceParam): string {
-    return (pattern.re)
-      ? original.replace(pattern.re,     rep.replace)
-      : original.replace(pattern.substr, rep.replace);
-  }
-
-  /**
    * @abstract
    */
   attrForCache(_: any): string {
@@ -174,6 +162,18 @@ class Converter {
    */
   valueForCache(_: any): string {
     return '';
+  }
+
+  /**
+   * @param {string}       original
+   * @param {PatternParam} pattern
+   * @param {ReplaceParam} rep
+   * @returns {string}
+   */
+  static replace(original: string, pattern: PatternParam, rep: ReplaceParam): string {
+    return (pattern.re)
+      ? original.replace(pattern.re,     rep.replace)
+      : original.replace(pattern.substr, rep.replace);
   }
 }
 
