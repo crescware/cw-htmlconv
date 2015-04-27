@@ -15,25 +15,10 @@ interface CwHtmlconvExtended extends CheerioElement {
   };
 }
 
-type Pattern = {re?: RegExp; substr?: string};
-
-/**
- * @param {string} pattern
- * @returns {{re: RegExp, substr: string}}
- */
-function regExpOrSubstr(pattern: string): Pattern {
-  var re: RegExp;
-  var substr = '';
-  if (pattern[0] === '/' && pattern[pattern.length - 1] === '/') {
-    re = new RegExp(pattern.substring(1, pattern.length - 1));
-  } else {
-    substr = pattern;
-  }
-
-  return {re: re, substr: substr};
+interface Patterns {
+  [pattern: string]: string;
 }
 
-type Patterns = {[pattern: string]: string};
 interface ReplaceParam {
   replace: string
 }
@@ -42,88 +27,210 @@ interface AttributeReplaceParam extends ReplaceParam {
   value?: Patterns
 }
 
-function replaceParam(rep: string|ReplaceParam): ReplaceParam {
-  if (typeof rep === 'string') {
-    return {replace: rep};
-  }
-  return <ReplaceParam>rep;
+interface PatternParam {
+  re?: RegExp;
+  substr?: string;
 }
 
-function cache(elm: CwHtmlconvExtended, attr: string, value: string) {
-  elm._cwHtmlconvProcessed         = elm._cwHtmlconvProcessed || {};
-  elm._cwHtmlconvProcessed.attribs = elm._cwHtmlconvProcessed.attribs || {};
-  elm._cwHtmlconvProcessed.attribs[attr] = value;
-  return elm;
-}
+class Converter {
+  replaceParam: ReplaceParam;
+  pattern: PatternParam;
+  target: string;
 
-function addProcessedPattern(elm: CwHtmlconvExtended, target: string) {
-  elm._cwHtmlconvProcessed                 = elm._cwHtmlconvProcessed || {};
-  elm._cwHtmlconvProcessed.alreadyReplaced = elm._cwHtmlconvProcessed.alreadyReplaced || {};
-  elm._cwHtmlconvProcessed.alreadyReplaced[target] = true;
-  return elm;
-}
-
-function replace(original: string, pattern: Pattern, rep: ReplaceParam) {
-  return (pattern.re)
-    ? original.replace(pattern.re,     rep.replace)
-    : original.replace(pattern.substr, rep.replace);
-}
-
-function test(target: string, pattern: Pattern) {
-  const testRegExp = pattern.re || new RegExp(pattern.substr);
-  return testRegExp.test(target);
-}
-
-function convert(elm: CwHtmlconvExtended, patterns: {attr?: any; value?: any}, attr: string, value: string, cb?: (rep: ReplaceParam, attr: string) => void) {
-  var target: string;
-  var usePatterns: any;
-  var cachingAttr: Function;
-  var cachingValue: Function;
-
-  if (patterns.attr) {
-    target       = attr;
-    usePatterns  = patterns.attr;
-    cachingAttr  = (replaced: string) => replaced;
-    cachingValue = (_: string) => value;
-  } else if (!patterns.attr && patterns.value) {
-    target       = value;
-    usePatterns  = patterns.value;
-    cachingAttr  = (_: string) => attr;
-    cachingValue = (replaced: string) => replaced;
-  } else {
-    throw new Error('Invalid patterns');
+  /**
+   * @constructor
+   */
+  constructor(
+    public elm: CwHtmlconvExtended,
+    public attr: string,
+    public value: string,
+    public convertCallback: Function,
+    replaceParam: string|ReplaceParam,
+    pattern: string
+  ) {
+    this.replaceParam = this.treatReplaceParam(replaceParam);
+    this.pattern = this.treatPatternParam(pattern);
   }
 
-  lodash.forEach(usePatterns, (rawReplace: string|ReplaceParam, rawPattern: string) => {
-    const rep        = replaceParam(rawReplace);
-    const pattern    = regExpOrSubstr(rawPattern);
+  treatReplaceParam(rep: string|ReplaceParam): ReplaceParam {
+    if (typeof rep === 'string') {
+      return {replace: rep};
+    }
+    return <ReplaceParam>rep;
+  }
 
-    if (test(target, pattern)) {
-      const replaced = replace(
-        target,
-        pattern,
-        replaceParam(rawReplace)
-      );
-      elm = cache(elm, cachingAttr(replaced), cachingValue(replaced));
-      elm = addProcessedPattern(elm, target);
+  /**
+   * @param {string} pattern
+   * @returns {{re: RegExp, substr: string}}
+   */
+  treatPatternParam(pattern: string): PatternParam {
+    var re: RegExp;
+    var substr = '';
+    if (pattern[0] === '/' && pattern[pattern.length - 1] === '/') {
+      re = new RegExp(pattern.substring(1, pattern.length - 1));
+    } else {
+      substr = pattern;
+    }
+
+    return {re: re, substr: substr};
+  }
+
+  test() {
+    const testRegExp = this.pattern.re || new RegExp(this.pattern.substr);
+    return testRegExp.test(this.target);
+  }
+
+  convert(): CwHtmlconvExtended {
+    if (this.test()) {
+      const replaced = this.replace(this.target, this.pattern, this.replaceParam);
+      this.elm = this.cache(this.elm, this.cachingAttr(replaced), this.cachingValue(replaced));
+      this.elm = this.addProcessedPattern(this.elm, this.target);
 
       // If it has been traversed already using another selector
       // the original attr is deleted after the replacement
-      if (elm._cwHtmlconvProcessed.attribs[target]) {
-        delete elm._cwHtmlconvProcessed.attribs[target];
+      if (this.elm._cwHtmlconvProcessed.attribs[this.target]) {
+        delete this.elm._cwHtmlconvProcessed.attribs[this.target];
       }
 
-      cb(rep, cachingAttr(replaced));
-      return;
+      this.convertCallback(this.replaceParam, this.cachingAttr(replaced));
+      return this.elm;
     }
-    if (elm._cwHtmlconvProcessed && elm._cwHtmlconvProcessed.alreadyReplaced) {
-      const already = elm._cwHtmlconvProcessed.alreadyReplaced[target];
-      if (already) {return}
+    if (this.elm._cwHtmlconvProcessed && this.elm._cwHtmlconvProcessed.alreadyReplaced) {
+      const already = this.elm._cwHtmlconvProcessed.alreadyReplaced[this.target];
+      if (already) {return this.elm}
     }
-    elm = cache(elm, attr, value);
-  });
+    this.elm = this.cache(this.elm, this.attr, this.value);
+    return this.elm;
+  }
 
-  return elm;
+  private cache(elm: CwHtmlconvExtended, attr: string, value: string) {
+    elm._cwHtmlconvProcessed         = elm._cwHtmlconvProcessed || {};
+    elm._cwHtmlconvProcessed.attribs = elm._cwHtmlconvProcessed.attribs || {};
+    elm._cwHtmlconvProcessed.attribs[attr] = value;
+    return elm;
+  }
+
+  private addProcessedPattern(elm: CwHtmlconvExtended, target: string) {
+    elm._cwHtmlconvProcessed                 = elm._cwHtmlconvProcessed || {};
+    elm._cwHtmlconvProcessed.alreadyReplaced = elm._cwHtmlconvProcessed.alreadyReplaced || {};
+    elm._cwHtmlconvProcessed.alreadyReplaced[target] = true;
+    return elm;
+  }
+
+  private replace(original: string, pattern: PatternParam, rep: ReplaceParam) {
+    return (pattern.re)
+      ? original.replace(pattern.re,     rep.replace)
+      : original.replace(pattern.substr, rep.replace);
+  }
+
+  /**
+   * @abstract
+   */
+  cachingAttr(_: any): string {
+    return '';
+  }
+
+  /**
+   * @abstract
+   */
+  cachingValue(_: any): string {
+    return '';
+  }
+}
+
+class AttributeConverter extends Converter {
+  /**
+   * @constructor
+   */
+  constructor(
+    public elm: CwHtmlconvExtended,
+    public attr: string,
+    public value: string,
+    public convertCallback: Function,
+    replace: string|ReplaceParam,
+    pattern: string
+  ) {
+    super(elm, attr, value, convertCallback, replace, pattern);
+    this.target = this.attr;
+  }
+
+  cachingAttr(replaced: string): string {
+    return replaced;
+  }
+
+  cachingValue(_: any): string {
+    return this.value;
+  }
+}
+
+class ValueConverter extends Converter {
+  /**
+   * @constructor
+   */
+  constructor(
+    public elm: CwHtmlconvExtended,
+    public attr: string,
+    public value: string,
+    public convertCallback: Function,
+    replace: string|ReplaceParam,
+    pattern: string
+  ) {
+    super(elm, attr, value, convertCallback, replace, pattern);
+    this.target = this.value;
+  }
+
+  cachingAttr(_: any): string {
+    return this.attr;
+  }
+
+  cachingValue(replaced: string): string {
+    return replaced;
+  }
+}
+
+class Traverser {
+  /**
+   * @constructor
+   */
+  constructor(
+    public elm: CwHtmlconvExtended,
+    public attrPatterns: any,
+    public attr: string,
+    public value: string
+  ) {
+    // noop
+  }
+
+  traverse(): CwHtmlconvExtended {
+    this.elm = this.convert(this.elm, AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
+      const valuePatterns = rep.value;
+      if (valuePatterns) {
+        this.elm = this.convert(this.elm, ValueConverter, {value: valuePatterns}, _attr, () => {/*noop*/});
+      }
+    });
+
+    return this.elm;
+  }
+
+  private convert(elm: CwHtmlconvExtended, _Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
+    var target: string;
+    var usePatterns: any;
+
+    if (patterns.attr) {
+      usePatterns  = patterns.attr;
+    } else if (!patterns.attr && patterns.value) {
+      usePatterns  = patterns.value;
+    } else {
+      throw new Error('Invalid patterns');
+    }
+
+    lodash.forEach(usePatterns, (rawReplace: string|ReplaceParam, rawPattern: string) => {
+      const converter = new _Converter(elm, attr, this.value, cb, rawReplace, rawPattern);
+      elm = converter.convert();
+    });
+
+    return elm;
+  }
 }
 
 /**
@@ -140,15 +247,10 @@ export default function main(input: string, patterns?: any): string {
 
   lodash.forEach(selectors, (selector: string) => {
     const attrPatterns = patterns[selector].attr || {};
-
     $(selector).each((i: number, elm: CwHtmlconvExtended) => {
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        elm = convert(elm, {attr: attrPatterns}, attr, value, (rep: AttributeReplaceParam, attr: string) => {
-          const valuePatterns = rep.value;
-          if (valuePatterns) {
-            elm = convert(elm, {value: valuePatterns}, attr, value, () => {/*noop*/});
-          }
-        });
+        const traverser = new Traverser(elm, attrPatterns, attr, value);
+        elm = traverser.traverse();
       });
     });
   });
