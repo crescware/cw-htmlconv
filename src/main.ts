@@ -202,10 +202,10 @@ class Traverser {
   }
 
   traverse(): CwHtmlconvExtended {
-    this.elm = this.convert(AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
+    this.convert(AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
       const valuePatterns = rep.value;
       if (valuePatterns) {
-        this.elm = this.convert(ValueConverter, {value: valuePatterns}, _attr, () => {/*noop*/});
+        this.convert(ValueConverter, {value: valuePatterns}, _attr, () => {/*noop*/});
       }
     });
 
@@ -228,8 +228,6 @@ class Traverser {
       const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern);
       this.elm = converter.convert();
     });
-
-    return this.elm;
   }
 }
 
