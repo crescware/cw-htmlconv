@@ -50,6 +50,17 @@ class Converter {
   ) {
     this.replaceParam = this.treatReplaceParam(replaceParam);
     this.pattern = this.treatPatternParam(pattern);
+
+    this.initCache();
+  }
+
+  /**
+   * @returns {void}
+   */
+  private initCache() {
+    this.elm._cwHtmlconvProcessed                 = this.elm._cwHtmlconvProcessed || {};
+    this.elm._cwHtmlconvProcessed.attribs         = this.elm._cwHtmlconvProcessed.attribs || {};
+    this.elm._cwHtmlconvProcessed.alreadyReplaced = this.elm._cwHtmlconvProcessed.alreadyReplaced || {};
   }
 
   /**
@@ -93,8 +104,8 @@ class Converter {
   convert(): CwHtmlconvExtended {
     if (this.test()) {
       const replaced = this.replace(this.target, this.pattern, this.replaceParam);
-      this.elm = this.cache(this.elm, this.cachingAttr(replaced), this.cachingValue(replaced));
-      this.elm = this.addProcessedPattern(this.elm, this.target);
+      this.cache(this.cachingAttr(replaced), this.cachingValue(replaced));
+      this.addProcessedPattern(this.target);
 
       // If it has been traversed already using another selector
       // the original attr is deleted after the replacement
@@ -105,37 +116,28 @@ class Converter {
       this.convertCallback(this.replaceParam, this.cachingAttr(replaced));
       return this.elm;
     }
-    if (this.elm._cwHtmlconvProcessed && this.elm._cwHtmlconvProcessed.alreadyReplaced) {
-      const already = this.elm._cwHtmlconvProcessed.alreadyReplaced[this.target];
-      if (already) {return this.elm}
-    }
-    this.elm = this.cache(this.elm, this.attr, this.value);
+    const already = this.elm._cwHtmlconvProcessed.alreadyReplaced[this.target];
+    if (already) {return this.elm}
+
+    this.cache(this.attr, this.value);
     return this.elm;
   }
 
   /**
-   * @param {CwHtmlconvExtended} elm
    * @param {string} attr
    * @param {string} value
-   * @returns {CwHtmlconvExtended}
+   * @returns {void}
    */
-  private cache(elm: CwHtmlconvExtended, attr: string, value: string): CwHtmlconvExtended {
-    elm._cwHtmlconvProcessed         = elm._cwHtmlconvProcessed || {};
-    elm._cwHtmlconvProcessed.attribs = elm._cwHtmlconvProcessed.attribs || {};
-    elm._cwHtmlconvProcessed.attribs[attr] = value;
-    return elm;
+  private cache(attr: string, value: string) {
+    this.elm._cwHtmlconvProcessed.attribs[attr] = value;
   }
 
   /**
-   * @param {CwHtmlconvExtended} elm
    * @param {string} target
-   * @returns {CwHtmlconvExtended}
+   * @returns {void}
    */
-  private addProcessedPattern(elm: CwHtmlconvExtended, target: string): CwHtmlconvExtended {
-    elm._cwHtmlconvProcessed                 = elm._cwHtmlconvProcessed || {};
-    elm._cwHtmlconvProcessed.alreadyReplaced = elm._cwHtmlconvProcessed.alreadyReplaced || {};
-    elm._cwHtmlconvProcessed.alreadyReplaced[target] = true;
-    return elm;
+  private addProcessedPattern(target: string) {
+    this.elm._cwHtmlconvProcessed.alreadyReplaced[target] = true;
   }
 
   /**
