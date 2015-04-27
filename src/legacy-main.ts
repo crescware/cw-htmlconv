@@ -59,7 +59,7 @@ class Builder {
    * @returns {void}
    */
   onOpenTag(tag: string, attrs: Attrs) {
-    const converter = new Converter(tag, attrs, this.patterns);
+    const converter = new LegacyConverter(tag, attrs, this.patterns);
     const convertedAttrs = converter.allAttributes();
     const outputTemp = (convertedAttrs)
       ? `<${tag} ${convertedAttrs}>`
@@ -111,7 +111,7 @@ class Builder {
   }
 }
 
-class Converter {
+class LegacyConverter {
   tag: string;
 
   /**
