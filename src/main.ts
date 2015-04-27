@@ -256,6 +256,7 @@ export default function main(input: string, allPatterns?: any): string {
 
   lodash.forEach(selectors, (selector: string) => {
     $(selector).each((i: number, elm: CwHtmlconvExtended) => {
+      if (!Object.keys(elm.attribs).length) {return}
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
         const patterns = pickAttrPatterns(selector, allPatterns);
         const traverser = new Traverser(elm, patterns, attr, value);
