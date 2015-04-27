@@ -264,6 +264,10 @@ class Traverser {
     return this.elm;
   }
 
+  /**
+   * @param {*} attrPatterns
+   * @returns {void}
+   */
   private convertAttr(attrPatterns: any) {
     const _Converter = AttributeConverter;
     const patterns   = {attr: attrPatterns};
@@ -272,6 +276,11 @@ class Traverser {
     this.convert(_Converter, patterns, this.attr, cb);
   }
 
+  /**
+   * @param {AttributeReplaceParam} replaceParam
+   * @param {string} attr
+   * @returns {void}
+   */
   private convertValue(replaceParam: AttributeReplaceParam, attr: string) {
     if (!replaceParam.value) {return}
 
