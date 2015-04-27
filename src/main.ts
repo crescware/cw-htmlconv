@@ -93,7 +93,7 @@ class Converter {
   /**
    * @returns {boolean}
    */
-  test(): boolean {
+  private targetToMatchThePattern(): boolean {
     const testRegExp = this.pattern.re || new RegExp(this.pattern.substr);
     return testRegExp.test(this.target);
   }
@@ -102,25 +102,35 @@ class Converter {
    * @returns {CwHtmlconvExtended}
    */
   convert(): CwHtmlconvExtended {
-    if (this.test()) {
-      const replaced = this.replace(this.target, this.pattern, this.replaceParam);
-      this.cache(this.cachingAttr(replaced), this.cachingValue(replaced));
-      this.addProcessedPattern(this.target);
-
-      // If it has been traversed already using another selector
-      // the original attr is deleted after the replacement
-      if (this.elm._cwHtmlconvProcessed.attribs[this.target]) {
-        delete this.elm._cwHtmlconvProcessed.attribs[this.target];
+    if (!this.targetToMatchThePattern()) {
+      const already = this.elm._cwHtmlconvProcessed.alreadyReplaced[this.target];
+      if (!already) {
+        this.cache(this.attr, this.value);
       }
-
-      this.convertCallback(this.replaceParam, this.cachingAttr(replaced));
       return this.elm;
     }
-    const already = this.elm._cwHtmlconvProcessed.alreadyReplaced[this.target];
-    if (already) {return this.elm}
+    
+    const replaced = this.replace(this.target, this.pattern, this.replaceParam);
+    this.cache(this.cachingAttr(replaced), this.cachingValue(replaced));
+    this.addProcessedPattern(this.target);
 
-    this.cache(this.attr, this.value);
+    this.updateProcessedAttribs();
+
+    // Run replacement for value
+    this.convertCallback(this.replaceParam, this.cachingAttr(replaced));
     return this.elm;
+  }
+
+  /**
+   * If it has been traversed already using another selector
+   * the original attr is deleted after the replacement
+   *
+   * @returns {void}
+   */
+  private updateProcessedAttribs() {
+    if (this.elm._cwHtmlconvProcessed.attribs[this.target]) {
+      delete this.elm._cwHtmlconvProcessed.attribs[this.target];
+    }
   }
 
   /**
