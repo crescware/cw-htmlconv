@@ -202,10 +202,10 @@ class Traverser {
   }
 
   traverse(): CwHtmlconvExtended {
-    this.elm = this.convert(this.elm, AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
+    this.elm = this.convert(AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
       const valuePatterns = rep.value;
       if (valuePatterns) {
-        this.elm = this.convert(this.elm, ValueConverter, {value: valuePatterns}, _attr, () => {/*noop*/});
+        this.elm = this.convert(ValueConverter, {value: valuePatterns}, _attr, () => {/*noop*/});
       }
     });
 
@@ -223,13 +223,13 @@ class Traverser {
     throw new Error('Invalid patterns');
   }
 
-  private convert(elm: CwHtmlconvExtended, _Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
+  private convert(_Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
     lodash.forEach(this.pickPatterns(patterns), (rawReplace: string|ReplaceParam, rawPattern: string) => {
-      const converter = new _Converter(elm, attr, this.value, cb, rawReplace, rawPattern);
-      elm = converter.convert();
+      const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern);
+      this.elm = converter.convert();
     });
 
-    return elm;
+    return this.elm;
   }
 }
 
