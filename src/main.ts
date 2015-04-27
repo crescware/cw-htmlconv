@@ -24,6 +24,14 @@ function regExpOrSubstr(pattern: string): {re?: RegExp; substr?: string} {
   return {re: re, substr: substr};
 }
 
+type AttributeReplace = {replace: string; value?: {[pattern: string]: string}};
+function replaceParam(rep: string|AttributeReplace): AttributeReplace {
+  if (typeof rep === 'string') {
+    return {replace: rep};
+  }
+  return <AttributeReplace>rep;
+}
+
 /**
  * @param {string}          input
  * @param {PatternsForAttr} patterns
@@ -42,18 +50,37 @@ export default function main(input: string, patterns?: any): string {
 
     $(selector).each((i: number, elm: any) => {
       console.log(elm.attribs);
-      lodash.forEach(attrPatterns, (replace: string, rawPattern: string) => {
+      lodash.forEach(attrPatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
         lodash.forEach(elm.attribs, (value: string, attr: string) => {
-          const pattern = regExpOrSubstr(rawPattern);
-          const testRegExp = pattern.re || new RegExp(pattern.substr);
+          const attrRep = replaceParam(rawReplace);
+          const attrPattern = regExpOrSubstr(rawPattern);
+          const attrTestRegExp = attrPattern.re || new RegExp(attrPattern.substr);
 
-          if (testRegExp.test(attr)) {
-            const replacedAttr = (pattern.re)
-              ? attr.replace(pattern.re,     replace)
-              : attr.replace(pattern.substr, replace);
+          if (attrTestRegExp.test(attr)) {
+            const value = elm.attribs[attr];
+            const replacedAttr = (attrPattern.re)
+              ? attr.replace(attrPattern.re,     attrRep.replace)
+              : attr.replace(attrPattern.substr, attrRep.replace);
             elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
             elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
-            elm._cwHtmlconvReplaced.attribs[replacedAttr] = elm.attribs[attr];
+            elm._cwHtmlconvReplaced.attribs[replacedAttr] = value;
+
+            const valuePatterns = attrRep.value;
+            if (valuePatterns) {
+              lodash.forEach(valuePatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
+                const valueRep = replaceParam(rawReplace);
+                const valuePattern = regExpOrSubstr(rawPattern);
+                const valueTestRegExp = valuePattern.re || new RegExp(valuePattern.substr);
+                if (valueTestRegExp.test(value)) {
+                  const replacedValue = (valuePattern.re)
+                    ? value.replace(valuePattern.re,     valueRep.replace)
+                    : value.replace(valuePattern.substr, valueRep.replace);
+                  elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
+                  elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
+                  elm._cwHtmlconvReplaced.attribs[replacedAttr] = replacedValue;
+                }
+              });
+            }
           }
         });
       });
@@ -69,5 +96,6 @@ export default function main(input: string, patterns?: any): string {
     }
   });
 
+  console.log('return ==========================================================================================');
   return $.html();
 }

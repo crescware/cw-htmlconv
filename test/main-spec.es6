@@ -94,4 +94,21 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<div><img src="./foo.jpg"><img src="./bar.jpg"></div>`,
+    `<div><img crs="./foofoo.png"><img crs="./barbar.png"></div>`,
+    {
+      '*': {
+        attr: {
+          src: {
+            replace: 'crs',
+            value: {
+              '/\\./(.*)\\.jpg/': './$1$1.png'
+            }
+          }
+        }
+      }
+    }
+  );
 });
