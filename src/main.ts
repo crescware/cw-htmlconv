@@ -2,11 +2,13 @@
 /// <reference path="../typings/cheerio/cheerio.d.ts" />
 /// <reference path="../typings/htmlparser2/htmlparser2.d.ts" />
 /// <reference path="../typings/lodash/lodash.d.ts" />
+/// <reference path="../typings/string/string.d.ts" />
 'use strict';
 import {Promise} from 'es6-promise';
 import * as htmlparser from 'htmlparser2';
 import * as cheerio from 'cheerio';
 import * as lodash from 'lodash';
+import * as S from 'string';
 
 interface CwHtmlconvExtended extends CheerioElement {
   _cwHtmlconvProcessed: {
@@ -27,7 +29,10 @@ interface Patterns {
 }
 
 interface ReplaceParam {
-  replace: string
+  replace: string;
+  manipulation?: {
+    [match: string]: string;
+  };
 }
 
 interface AttributeReplaceParam extends ReplaceParam {
@@ -253,7 +258,11 @@ class Converter {
     let want = rep.replace;
     const parentMatchSyntax = want.match(/%a(\d)/g);
     if (/*has*/parentMatchSyntax) {
-      lodash.forEach(parentMatch.a, (match, i) => {
+      lodash.forEach(parentMatch.a, (match: string, i: number) => {
+        if (rep.manipulation && Object.keys(rep.manipulation).length) {
+          const behavior = rep.manipulation[`%a${i}`];
+          match = Converter.manipulate(behavior, match);
+        }
         want = want.replace(new RegExp(`%a${i}`, 'g'), match);
       });
     }
@@ -261,6 +270,21 @@ class Converter {
     return (pattern.re)
       ? original.replace(pattern.re,     want)
       : original.replace(pattern.substr, want);
+  }
+
+  /**
+   * @param {string} behavior
+   * @param {string} str
+   * @returns {string}
+   */
+  static manipulate(behavior: string, str: string): string {
+    if (behavior === 'camelize') {
+      return S(str).camelize().s;
+    }
+    if (behavior === 'dasherize') {
+      return S(str).dasherize().s;
+    }
+    return '';
   }
 }
 
@@ -436,7 +460,7 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
   $('*').each((i: number, elm: CwHtmlconvExtended) => {
     if (!elm._cwHtmlconvProcessed) {return}
     if (Object.keys(elm._cwHtmlconvProcessed.emptyValueToken).length) {
-      lodash.forEach(elm._cwHtmlconvProcessed.emptyValueToken, (token, attr) => {
+      lodash.forEach(elm._cwHtmlconvProcessed.emptyValueToken, (token: string, attr: string) => {
         forceEmpty[attr] = token;
       })
     }
@@ -447,9 +471,9 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
 
   if (Object.keys(forceEmpty).length) {
     let output = $.html();
-    lodash.forEach(forceEmpty, (token, attr) => {
+    lodash.forEach(forceEmpty, (token: string, attr: string) => {
       output = output.replace(`${attr}="${token}"`, attr);
-    })
+    });
     return output;
   }
 

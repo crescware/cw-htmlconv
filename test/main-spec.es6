@@ -330,6 +330,28 @@ describe('main', () => {
   );
 
   parameterized(
+    `<input type="text" #first-name>`,
+    `<input type="text" ng-model="ngModel.firstName">`,
+    {
+      '*': {
+        attr: {
+          '/^#(.*)$/': {
+            replace: 'ng-model',
+            value: {
+              '/^.*$/': {
+                replace: 'ngModel.%a1',
+                manipulation: {
+                  '%a1': 'camelize'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
     `<div class="view" [class.hidden]="todoEdit == todo"></div>`,
     `<div class="view" ng-class="{hidden: todoEdit == todo}"></div>`,
     {
