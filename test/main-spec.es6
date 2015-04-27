@@ -76,6 +76,16 @@ describe('main', () => {
   );
 
   parameterized(
+    `<a href="./" accesskey="A">Text</a>`,
+    `<a conv="./" accesskey="A">Text</a>`,
+    {
+      '*': {
+        attr: {'href': 'conv'}
+      }
+    }
+  );
+
+  parameterized(
     `<a href="./">漢字</a>`,
     `<a conv="./">&#x6F22;&#x5B57;</a>`,
     {

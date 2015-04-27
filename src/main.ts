@@ -77,6 +77,8 @@ function convert(elm: CwHtmlconvExtended, patterns: {attr?: any; value?: any}, a
       elm = cacheReplaced(elm, cachingAttr(replaced), cachingValue(replaced));
 
       cb(rep, cachingAttr(replaced));
+    } else {
+      elm = cacheReplaced(elm, attr, value);
     }
   });
 
