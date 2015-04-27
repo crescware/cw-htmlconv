@@ -94,7 +94,6 @@ export default function main(input: string, patterns?: any): string {
     const attrPatternsKeys = Object.keys(attrPatterns);
 
     $(selector).each((i: number, elm: any) => {
-      console.log(elm.attribs);
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
         elm = convert(elm, {attr: attrPatterns}, attr, value, (rep: AttributeReplace, attr: string) => {
           const valuePatterns = rep.value;
@@ -103,8 +102,6 @@ export default function main(input: string, patterns?: any): string {
           }
         });
       });
-
-      console.log('==========================================================================================');
     });
   });
 
@@ -115,6 +112,5 @@ export default function main(input: string, patterns?: any): string {
     }
   });
 
-  console.log('return ==========================================================================================');
   return $.html();
 }
