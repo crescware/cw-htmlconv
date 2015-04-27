@@ -9,7 +9,7 @@ import * as cheerio from 'cheerio';
 import * as lodash from 'lodash';
 
 interface CwHtmlconvExtended extends CheerioElement {
-  _cwHtmlconvReplaced: {
+  _cwHtmlconvProcessed: {
     attribs?: {[attr: string]: string};
   };
 }
@@ -38,10 +38,10 @@ function replaceParam(rep: string|AttributeReplace): AttributeReplace {
   return <AttributeReplace>rep;
 }
 
-function cacheReplaced(elm: CwHtmlconvExtended, attr: string, value: string) {
-  elm._cwHtmlconvReplaced         = elm._cwHtmlconvReplaced || {};
-  elm._cwHtmlconvReplaced.attribs = elm._cwHtmlconvReplaced.attribs || {};
-  elm._cwHtmlconvReplaced.attribs[attr] = value;
+function cache(elm: CwHtmlconvExtended, attr: string, value: string) {
+  elm._cwHtmlconvProcessed         = elm._cwHtmlconvProcessed || {};
+  elm._cwHtmlconvProcessed.attribs = elm._cwHtmlconvProcessed.attribs || {};
+  elm._cwHtmlconvProcessed.attribs[attr] = value;
   return elm;
 }
 
@@ -74,11 +74,11 @@ function convert(elm: CwHtmlconvExtended, patterns: {attr?: any; value?: any}, a
       const replaced = (pattern.re)
         ? target.replace(pattern.re,     rep.replace)
         : target.replace(pattern.substr, rep.replace);
-      elm = cacheReplaced(elm, cachingAttr(replaced), cachingValue(replaced));
+      elm = cache(elm, cachingAttr(replaced), cachingValue(replaced));
 
       cb(rep, cachingAttr(replaced));
     } else {
-      elm = cacheReplaced(elm, attr, value);
+      elm = cache(elm, attr, value);
     }
   });
 
@@ -113,9 +113,9 @@ export default function main(input: string, patterns?: any): string {
   });
 
   $('*').each((i: number, elm: CwHtmlconvExtended) => {
-    if (!elm._cwHtmlconvReplaced) {return}
-    if (elm._cwHtmlconvReplaced.attribs) {
-      elm.attribs = elm._cwHtmlconvReplaced.attribs;
+    if (!elm._cwHtmlconvProcessed) {return}
+    if (elm._cwHtmlconvProcessed.attribs) {
+      elm.attribs = elm._cwHtmlconvProcessed.attribs;
     }
   });
 
