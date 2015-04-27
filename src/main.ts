@@ -249,7 +249,6 @@ class Traverser {
    */
   constructor(
     public elm: CwHtmlconvExtended,
-    public attrPatterns: any,
     public attr: string,
     public value: string
   ) {
@@ -257,19 +256,30 @@ class Traverser {
   }
 
   /**
+   * @param {*} attrPatterns
    * @returns {CwHtmlconvExtended}
    */
-  traverse(): CwHtmlconvExtended {
-    const patterns = {attr: this.attrPatterns};
-    this.convert(AttributeConverter, patterns, this.attr, (rep, _attr) => {
-      const valuePatterns = rep.value;
-      if (valuePatterns) {
-        const patterns = {value: valuePatterns};
-        this.convert(ValueConverter, patterns, _attr, () => {/*noop*/});
-      }
-    });
-
+  traverse(attrPatterns: any): CwHtmlconvExtended {
+    this.convertAttr(attrPatterns);
     return this.elm;
+  }
+
+  private convertAttr(attrPatterns: any) {
+    const _Converter = AttributeConverter;
+    const patterns   = {attr: attrPatterns};
+    const cb = (replaceParam: AttributeReplaceParam, _attr: string) => this.convertValue(replaceParam, _attr);
+
+    this.convert(_Converter, patterns, this.attr, cb);
+  }
+
+  private convertValue(replaceParam: AttributeReplaceParam, attr: string) {
+    if (!replaceParam.value) {return}
+
+    const _Converter = ValueConverter;
+    const patterns   = {value: replaceParam.value};
+    const cb = () => {/*noop*/};
+
+    this.convert(_Converter, patterns, attr, cb);
   }
 
   /**
@@ -328,8 +338,8 @@ export default function main(input: string, allPatterns?: any): string {
       if (!Object.keys(elm.attribs).length) {return}
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
         const patterns = pickAttrPatterns(selector, allPatterns);
-        const traverser = new Traverser(elm, patterns, attr, value);
-        elm = traverser.traverse();
+        const traverser = new Traverser(elm, attr, value);
+        elm = traverser.traverse(patterns);
       });
     });
   });
