@@ -39,18 +39,41 @@ function cacheReplaced(elm: any, attr: string, value: string) {
   return elm;
 }
 
-function convert(elm: any, patterns: any, attr: string, value: string) {
-  lodash.forEach(patterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
-    const valueRep        = replaceParam(rawReplace);
-    const valuePattern    = regExpOrSubstr(rawPattern);
-    const valueTestRegExp = valuePattern.re || new RegExp(valuePattern.substr);
-    if (valueTestRegExp.test(value)) {
-      const replacedValue = (valuePattern.re)
-        ? value.replace(valuePattern.re,     valueRep.replace)
-        : value.replace(valuePattern.substr, valueRep.replace);
-      elm = cacheReplaced(elm, attr, replacedValue);
+function convert(elm: any, patterns: {attr?: any; value?: any}, attr: string, value: string, cb?: (rep: AttributeReplace, attr: string) => void) {
+  var target: string;
+  var usePatterns: any;
+  var cachingAttr: Function;
+  var cachingValue: Function;
+
+  if (patterns.attr) {
+    target       = attr;
+    usePatterns  = patterns.attr;
+    cachingAttr  = (replaced: string) => replaced;
+    cachingValue = (_: string) => value;
+  } else if (!patterns.attr && patterns.value) {
+    target       = value;
+    usePatterns  = patterns.value;
+    cachingAttr  = (_: string) => attr;
+    cachingValue = (replaced: string) => replaced;
+  } else {
+    throw new Error('Invalid patterns');
+  }
+
+  lodash.forEach(usePatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
+    const rep        = replaceParam(rawReplace);
+    const pattern    = regExpOrSubstr(rawPattern);
+    const testRegExp = pattern.re || new RegExp(pattern.substr);
+
+    if (testRegExp.test(target)) {
+      const replaced = (pattern.re)
+        ? target.replace(pattern.re,     rep.replace)
+        : target.replace(pattern.substr, rep.replace);
+      elm = cacheReplaced(elm, cachingAttr(replaced), cachingValue(replaced));
+
+      cb(rep, cachingAttr(replaced));
     }
   });
+
   return elm;
 }
 
@@ -73,22 +96,10 @@ export default function main(input: string, patterns?: any): string {
     $(selector).each((i: number, elm: any) => {
       console.log(elm.attribs);
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        lodash.forEach(attrPatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
-          const attrRep        = replaceParam(rawReplace);
-          const attrPattern    = regExpOrSubstr(rawPattern);
-          const attrTestRegExp = attrPattern.re || new RegExp(attrPattern.substr);
-
-          if (attrTestRegExp.test(attr)) {
-            const value = elm.attribs[attr];
-            const replacedAttr = (attrPattern.re)
-              ? attr.replace(attrPattern.re,     attrRep.replace)
-              : attr.replace(attrPattern.substr, attrRep.replace);
-            elm = cacheReplaced(elm, replacedAttr, value);
-
-            const valuePatterns = attrRep.value;
-            if (valuePatterns) {
-              elm = convert(elm, valuePatterns, replacedAttr, value);
-            }
+        elm = convert(elm, {attr: attrPatterns}, attr, value, (rep: AttributeReplace, attr: string) => {
+          const valuePatterns = rep.value;
+          if (valuePatterns) {
+            elm = convert(elm, {value: valuePatterns}, attr, value, () => {/*noop*/});
           }
         });
       });
