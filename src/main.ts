@@ -92,19 +92,33 @@ class Converter {
   ) {
     this.replaceParam = Converter.treatReplaceParam(replaceParam);
     this.pattern = Converter.treatPatternParam(pattern);
-    this.selectorAttrRegExp = Converter.pickRegExp(Converter.treatPatternParam(this.options.selectorAttrRegExp));
 
     this.initCache();
+    this.initSelectorAttrRegExp();
   }
 
   /**
    * @returns {void}
    */
   private initCache() {
+    if (!this.elm) {
+      throw new Error('No element was given');
+    }
     this.elm._cwHtmlconvProcessed                 = this.elm._cwHtmlconvProcessed || {};
     this.elm._cwHtmlconvProcessed.attribs         = this.elm._cwHtmlconvProcessed.attribs || {};
     this.elm._cwHtmlconvProcessed.alreadyReplaced = this.elm._cwHtmlconvProcessed.alreadyReplaced || {};
     this.elm._cwHtmlconvProcessed.emptyValueToken = this.elm._cwHtmlconvProcessed.emptyValueToken || {};
+  }
+
+  /**
+   * @returns {void}
+   */
+  private initSelectorAttrRegExp() {
+    if (this.options.selectorAttrRegExp) {
+      this.selectorAttrRegExp = Converter.pickRegExp(Converter.treatPatternParam(this.options.selectorAttrRegExp));
+      return;
+    }
+    this.selectorAttrRegExp = void 0;
   }
 
   /**
@@ -122,6 +136,10 @@ class Converter {
    * @returns {CwHtmlconvExtended}
    */
   convert(): CwHtmlconvExtended {
+    if (this.selectorAttrRegExp) {
+      if (!this.selectorAttrRegExp.test(this.target)) {return;}
+    }
+
     if (!this.targetToMatchThePattern()) {
       const already = this.elm._cwHtmlconvProcessed.alreadyReplaced[this.target];
       if (!already) {
@@ -391,7 +409,9 @@ class Traverser {
     public attr: string,
     public value: string
   ) {
-    // noop
+    if (!this.elm) {
+      throw new Error('element is undefined');
+    }
   }
 
   /**
@@ -493,6 +513,7 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
       if (!Object.keys(elm.attribs).length) {return}
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
         const patterns = pickAttrPatterns(originalSelector || selector, allPatterns);
+        if (!elm) {return}
         const traverser = new Traverser(elm, attr, value);
         elm = traverser.traverse(patterns, selectorAttrRegExp);
       });
