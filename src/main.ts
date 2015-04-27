@@ -486,8 +486,8 @@ class Traverser {
  * @param {AllPatterns} allPatterns
  * @returns {Patterns}
  */
-function pickAttrPatterns(selector: string, allPatterns: AllPatterns): Patterns {
-  return allPatterns[selector].attr || {};
+function pickPatterns(selector: string, allPatterns: AllPatterns): {attr?: Patterns} {
+  return allPatterns[selector] || {};
 }
 
 /**
@@ -515,7 +515,7 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
     $(selector).each((i: number, elm: CwHtmlconvExtended) => {
       if (!Object.keys(elm.attribs).length) {return}
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        const patterns = pickAttrPatterns(originalSelector || selector, allPatterns);
+        const patterns = pickPatterns(originalSelector || selector, allPatterns).attr;
         if (!elm) {return}
         const traverser = new Traverser(elm, attr, value);
         elm = traverser.traverse(patterns, selectorAttrRegExp);
