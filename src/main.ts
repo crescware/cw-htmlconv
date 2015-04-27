@@ -137,7 +137,10 @@ class Converter {
    */
   convert(): CwHtmlconvExtended {
     if (this.selectorAttrRegExp) {
-      if (!this.selectorAttrRegExp.test(this.target)) {return;}
+      const matched = lodash.some(Object.keys(this.elm.attribs), (attr: string) => {
+        return this.selectorAttrRegExp.test(attr);
+      });
+      if (!matched) {return}
     }
 
     if (!this.targetToMatchThePattern()) {
