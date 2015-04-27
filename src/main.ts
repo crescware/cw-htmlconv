@@ -244,25 +244,21 @@ function pickAttrPatterns(selector: string, patterns: any): any {
 
 /**
  * @param {string}          input
- * @param {PatternsForAttr} patterns
+ * @param {PatternsForAttr} allPatterns
  * @returns {string}
  */
-export default function main(input: string, patterns?: any): string {
-  const isEmpty = patterns === void 0 || patterns === null || !Object.keys(patterns).length;
+export default function main(input: string, allPatterns?: any): string {
+  const isEmpty = allPatterns === void 0 || allPatterns === null || !Object.keys(allPatterns).length;
   if (isEmpty) {return input}
 
   const $ = cheerio.load(input);
-  const selectors = Object.keys(patterns);
+  const selectors = Object.keys(allPatterns);
 
   lodash.forEach(selectors, (selector: string) => {
     $(selector).each((i: number, elm: CwHtmlconvExtended) => {
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        const traverser = new Traverser(
-          elm,
-          pickAttrPatterns(selector, patterns),
-          attr,
-          value
-        );
+        const patterns = pickAttrPatterns(selector, allPatterns);
+        const traverser = new Traverser(elm, patterns, attr, value);
         elm = traverser.traverse();
       });
     });
