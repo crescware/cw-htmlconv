@@ -192,11 +192,11 @@ class Converter {
    */
   static replace(original: string, pattern: PatternParam, rep: ReplaceParam, parentMatch?: ParentMatch): string {
     var want = rep.replace;
-    
+
     const parentMatchSyntax = want.match(/%a(\d)/g);
     if (/*has*/parentMatchSyntax) {
       lodash.forEach(parentMatch.a, (match, i) => {
-        want = want.replace(new RegExp(`%a${i}`), match);
+        want = want.replace(new RegExp(`%a${i}`, 'g'), match);
       });
     }
 

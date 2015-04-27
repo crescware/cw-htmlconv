@@ -232,4 +232,19 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<input #name>`,
+    `<input ng-model="namename">`,
+    {
+      '*': {
+        attr: {
+          '/^#(.*)$/': {
+            replace: 'ng-model',
+            value: {'/.*/': '%a1%a1'}
+          }
+        }
+      }
+    }
+  );
 });
