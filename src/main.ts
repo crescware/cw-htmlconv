@@ -64,8 +64,8 @@ class Converter {
     pattern: string,
     public parentMatch?: ParentMatch
   ) {
-    this.replaceParam = this.treatReplaceParam(replaceParam);
-    this.pattern = this.treatPatternParam(pattern);
+    this.replaceParam = Converter.treatReplaceParam(replaceParam);
+    this.pattern = Converter.treatPatternParam(pattern);
 
     this.initCache();
   }
@@ -77,33 +77,6 @@ class Converter {
     this.elm._cwHtmlconvProcessed                 = this.elm._cwHtmlconvProcessed || {};
     this.elm._cwHtmlconvProcessed.attribs         = this.elm._cwHtmlconvProcessed.attribs || {};
     this.elm._cwHtmlconvProcessed.alreadyReplaced = this.elm._cwHtmlconvProcessed.alreadyReplaced || {};
-  }
-
-  /**
-   * @param {string|ReplaceParam} rep
-   * @returns {ReplaceParam}
-   */
-  treatReplaceParam(rep: string|ReplaceParam): ReplaceParam {
-    if (typeof rep === 'string') {
-      return {replace: rep};
-    }
-    return <ReplaceParam>rep;
-  }
-
-  /**
-   * @param {string} pattern
-   * @returns {{re: RegExp, substr: string}}
-   */
-  treatPatternParam(pattern: string): PatternParam {
-    var re: RegExp;
-    var substr = '';
-    if (pattern[0] === '/' && pattern[pattern.length - 1] === '/') {
-      re = new RegExp(pattern.substring(1, pattern.length - 1));
-    } else {
-      substr = pattern;
-    }
-
-    return {re: re, substr: substr};
   }
 
   /**
@@ -181,6 +154,33 @@ class Converter {
    */
   protected valueForCache(_: any): string {
     return '';
+  }
+
+  /**
+   * @param {string|ReplaceParam} rep
+   * @returns {ReplaceParam}
+   */
+  static treatReplaceParam(rep: string|ReplaceParam): ReplaceParam {
+    if (typeof rep === 'string') {
+      return {replace: rep};
+    }
+    return <ReplaceParam>rep;
+  }
+
+  /**
+   * @param {string} pattern
+   * @returns {{re: RegExp, substr: string}}
+   */
+  static treatPatternParam(pattern: string): PatternParam {
+    var re: RegExp;
+    var substr = '';
+    if (pattern[0] === '/' && pattern[pattern.length - 1] === '/') {
+      re = new RegExp(pattern.substring(1, pattern.length - 1));
+    } else {
+      substr = pattern;
+    }
+
+    return {re: re, substr: substr};
   }
 
   /**
