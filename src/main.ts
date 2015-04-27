@@ -212,19 +212,19 @@ class Traverser {
     return this.elm;
   }
 
-  private convert(elm: CwHtmlconvExtended, _Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
-    var target: string;
-    var usePatterns: any;
-
+  private pickPatterns(patterns: {attr?: any; value?: any}) {
     if (patterns.attr) {
-      usePatterns  = patterns.attr;
-    } else if (!patterns.attr && patterns.value) {
-      usePatterns  = patterns.value;
-    } else {
-      throw new Error('Invalid patterns');
+      return patterns.attr;
+    }
+    if (patterns.value) {
+      return patterns.value;
     }
 
-    lodash.forEach(usePatterns, (rawReplace: string|ReplaceParam, rawPattern: string) => {
+    throw new Error('Invalid patterns');
+  }
+
+  private convert(elm: CwHtmlconvExtended, _Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
+    lodash.forEach(this.pickPatterns(patterns), (rawReplace: string|ReplaceParam, rawPattern: string) => {
       const converter = new _Converter(elm, attr, this.value, cb, rawReplace, rawPattern);
       elm = converter.convert();
     });
