@@ -10,7 +10,7 @@ const dir = {
   fixtures: path.resolve(process.cwd(), 'test/fixtures')
 };
 
-describe('cli', () => {
+describe.skip('cli', () => {
   const bin = path.resolve(process.cwd(), 'bin/cw-htmlconv');
   const command = (process.platform === 'win32') ? `node ${bin}` : bin;
 

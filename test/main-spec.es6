@@ -4,17 +4,74 @@ const htmlconv = htmlconv_.default; // HACK for default by TypeScript 1.5 Alpha
 
 describe('main', () => {
   function parameterized(input, expected, pattern) {
-    it(`${input} to be ${expected}`, (done) => {
-      htmlconv(input, pattern).then((actual) => {
-        //console.log(actual);
-        assert(actual === expected);
-        done();
-      });
+    it(`${input} to be ${expected}`, () => {
+      const actual = htmlconv(input, pattern);
+      assert(actual === expected);
     });
   }
 
   parameterized(
     `<p>Text</p>`,
     `<p>Text</p>`
+  );
+
+  parameterized(
+    `<p>漢字</p>`,
+    `<p>漢字</p>`
+  );
+
+  parameterized(
+    `<p>A&B</p>`,
+    `<p>A&B</p>`
+  );
+
+  parameterized(
+    `<p>A&amp;B</p>`,
+    `<p>A&amp;B</p>`
+  );
+
+  parameterized(
+    `<p>Text<br>Text</p>`,
+    `<p>Text<br>Text</p>`
+  );
+
+  parameterized(
+    `<p><span>Text</span></p>`,
+    `<p><span>Text</span></p>`
+  );
+
+  parameterized(
+    `<!DOCTYPE html><html></html>`,
+    `<!DOCTYPE html><html></html>`
+  );
+
+  parameterized(
+    `<!DOCTYPE html>\n<html>\n</html>`,
+    `<!DOCTYPE html>\n<html>\n</html>`
+  );
+
+  parameterized(
+    `<a href="./">Text</a>`,
+    `<a href="./">Text</a>`
+  );
+
+  parameterized(
+    `<body><h1><img src="image.png" alt="Alternative" width="90" height="53"></h1></body>`,
+    `<body><h1><img src="image.png" alt="Alternative" width="90" height="53"></h1></body>`
+  );
+
+  parameterized(
+    `<p><span><!-- comment --></span></p>`,
+    `<p><span><!-- comment --></span></p>`
+  );
+
+  parameterized(
+    `<a href="./">Text</a>`,
+    `<a conv="./">Text</a>`,
+    {
+      '*': {
+        attr: {'href': 'conv'}
+      }
+    }
   );
 });
