@@ -38,10 +38,19 @@ interface PatternParam {
   substr?: string;
 }
 
+interface ParentMatch {
+  a?: string[]; // attr match
+  v?: string[]; // value match
+}
+
+type ConverterCallback = (rep: AttributeReplaceParam, attr: string, parentMatch: ParentMatch) => void;
+
 class Converter {
   replaceParam: ReplaceParam;
   pattern: PatternParam;
+
   target: string;
+  match: string[];
 
   /**
    * @constructor
@@ -50,9 +59,10 @@ class Converter {
     public elm: CwHtmlconvExtended,
     public attr: string,
     public value: string,
-    public convertCallback: Function,
+    public convertCallback: ConverterCallback,
     replaceParam: string|ReplaceParam,
-    pattern: string
+    pattern: string,
+    public parentMatch?: ParentMatch
   ) {
     this.replaceParam = this.treatReplaceParam(replaceParam);
     this.pattern = this.treatPatternParam(pattern);
@@ -101,7 +111,10 @@ class Converter {
    */
   private targetToMatchThePattern(): boolean {
     const re = this.pattern.re || new RegExp(this.pattern.substr);
-    return re.test(this.target);
+    if (!re.test(this.target)) {return false}
+
+    this.match = this.target.match(re) || [];
+    return true;
   }
 
   /**
@@ -116,14 +129,14 @@ class Converter {
       return this.elm;
     }
 
-    const replaced = Converter.replace(this.target, this.pattern, this.replaceParam);
+    const replaced = Converter.replace(this.target, this.pattern, this.replaceParam, this.parentMatch);
     this.cache(this.attrForCache(replaced), this.valueForCache(replaced));
     this.addReplacedPattern(this.target);
 
     this.updateProcessedAttribs();
 
     // Run replacement for value
-    this.convertCallback(this.replaceParam, this.attrForCache(replaced));
+    this.convertCallback(this.replaceParam, this.attrForCache(replaced), {a: this.match});
     return this.elm;
   }
 
@@ -174,12 +187,22 @@ class Converter {
    * @param {string}       original
    * @param {PatternParam} pattern
    * @param {ReplaceParam} rep
+   * @param {ParentMatch}  [parentMatch]
    * @returns {string}
    */
-  static replace(original: string, pattern: PatternParam, rep: ReplaceParam): string {
+  static replace(original: string, pattern: PatternParam, rep: ReplaceParam, parentMatch?: ParentMatch): string {
+    var want = rep.replace;
+    
+    const parentMatchSyntax = want.match(/%a(\d)/g);
+    if (/*has*/parentMatchSyntax) {
+      lodash.forEach(parentMatch.a, (match, i) => {
+        want = want.replace(new RegExp(`%a${i}`), match);
+      });
+    }
+
     return (pattern.re)
-      ? original.replace(pattern.re,     rep.replace)
-      : original.replace(pattern.substr, rep.replace);
+      ? original.replace(pattern.re,     want)
+      : original.replace(pattern.substr, want);
   }
 }
 
@@ -191,11 +214,12 @@ class AttributeConverter extends Converter {
     public elm: CwHtmlconvExtended,
     public attr: string,
     public value: string,
-    public convertCallback: Function,
+    public convertCallback: ConverterCallback,
     replace: string|ReplaceParam,
-    pattern: string
+    pattern: string,
+    parentMatch?: ParentMatch
   ) {
-    super(elm, attr, value, convertCallback, replace, pattern);
+    super(elm, attr, value, convertCallback, replace, pattern, parentMatch);
     this.target = this.attr;
   }
 
@@ -224,11 +248,12 @@ class ValueConverter extends Converter {
     public elm: CwHtmlconvExtended,
     public attr: string,
     public value: string,
-    public convertCallback: Function,
+    public convertCallback: ConverterCallback,
     replace: string|ReplaceParam,
-    pattern: string
+    pattern: string,
+    parentMatch?: ParentMatch
   ) {
-    super(elm, attr, value, convertCallback, replace, pattern);
+    super(elm, attr, value, convertCallback, replace, pattern, parentMatch);
     this.target = this.value;
   }
 
@@ -276,23 +301,24 @@ class Traverser {
    */
   private convertAttr(attrPatterns: Patterns) {
     const _Converter = AttributeConverter;
-    const cb = (replaceParam: AttributeReplaceParam, _attr: string) => this.convertValue(replaceParam, _attr);
+    const cb: ConverterCallback = (replaceParam, _attr, parentMatch) => this.convertValue(replaceParam, _attr, parentMatch);
 
     this.convert(_Converter, attrPatterns, this.attr, cb);
   }
 
   /**
    * @param {AttributeReplaceParam} replaceParam
-   * @param {string} attr
+   * @param {string}   attr
+   * @param {string[]} parentMatch
    * @returns {void}
    */
-  private convertValue(replaceParam: AttributeReplaceParam, attr: string) {
+  private convertValue(replaceParam: AttributeReplaceParam, attr: string, parentMatch: ParentMatch) {
     if (!replaceParam.value) {return}
 
     const _Converter = ValueConverter;
     const cb = () => {/*noop*/};
 
-    this.convert(_Converter, replaceParam.value, attr, cb);
+    this.convert(_Converter, replaceParam.value, attr, cb, parentMatch);
   }
 
   /**
@@ -300,11 +326,12 @@ class Traverser {
    * @param {Patterns} patterns
    * @param {string}   attr
    * @param {Function} cb
+   * @param {Array<string>} [parentMatch]
    * @returns {void}
    */
-  private convert(_Converter: typeof Converter, patterns: Patterns, attr: string, cb?: (rep: AttributeReplaceParam, attr: string) => void) {
+  private convert(_Converter: typeof Converter, patterns: Patterns, attr: string, cb: ConverterCallback, parentMatch?: ParentMatch) {
     lodash.forEach(patterns, (rawReplace: string|ReplaceParam, rawPattern: string) => {
-      const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern);
+      const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern, parentMatch);
       this.elm = converter.convert();
     });
   }
