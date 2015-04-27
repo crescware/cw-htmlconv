@@ -174,7 +174,8 @@ class Converter {
    * @returns {void}
    */
   private updateProcessedAttribs() {
-    if (this.elm._cwHtmlconvProcessed.attribs[this.target]) {
+    const processed = this.elm._cwHtmlconvProcessed.attribs[this.target];
+    if (processed !== void 0 && processed !== null) {
       delete this.elm._cwHtmlconvProcessed.attribs[this.target];
     }
   }

@@ -414,4 +414,33 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<div [innertext]="textbox.value" (click)="action()" #name [class.aaa]="true" [class.bbb]="false"><!-- comment --></div>`,
+    `<div innertext="{{textbox.value}}" ng-click="action()" ng-model="name" ng-class="{aaa: true, bbb: false}"><!-- comment --></div>`,
+    {
+      '*': {
+        attr: {
+          '/^\\[([a-zA-Z_][a-zA-Z0-9_]*)\\]$/': {
+            replace: '$1',
+            value: {'/^(.*)$/': '{{$1}}'}
+          },
+          '/^#(.*)$/': {
+            replace: 'ng-model',
+            value: {'/.*/': '%a1'}
+          },
+          '/^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$/': 'ng-$1',
+          '/^\\[class\\.(.+)\\]$/': {
+            method: 'merge',
+            replace: 'ng-class',
+            open: '{',
+            close: '}',
+            separator: ', ',
+            valuePattern: '/^(.*)$/',
+            valueReplace: '%a1: $1'
+          }
+        }
+      }
+    }
+  );
 });
