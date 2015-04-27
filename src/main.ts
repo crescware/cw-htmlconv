@@ -234,6 +234,15 @@ class Traverser {
 }
 
 /**
+ * @param {string} selector
+ * @param {*} patterns
+ * @returns {*}
+ */
+function pickAttrPatterns(selector: string, patterns: any): any {
+  return patterns[selector].attr || {};
+}
+
+/**
  * @param {string}          input
  * @param {PatternsForAttr} patterns
  * @returns {string}
@@ -246,10 +255,14 @@ export default function main(input: string, patterns?: any): string {
   const selectors = Object.keys(patterns);
 
   lodash.forEach(selectors, (selector: string) => {
-    const attrPatterns = patterns[selector].attr || {};
     $(selector).each((i: number, elm: CwHtmlconvExtended) => {
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
-        const traverser = new Traverser(elm, attrPatterns, attr, value);
+        const traverser = new Traverser(
+          elm,
+          pickAttrPatterns(selector, patterns),
+          attr,
+          value
+        );
         elm = traverser.traverse();
       });
     });
