@@ -86,6 +86,61 @@ describe('main', () => {
   );
 
   parameterized(
+    `<a foo="./" baz="value"><span foo="./" baz="value">Span</span>Text</a>`,
+    `<a bar="./" baz="value"><span bar="./" qux="value">Span</span>Text</a>`,
+    {
+      '*': {
+        attr: {'foo': 'bar'}
+      },
+      'span': {
+        attr: {'baz': 'qux'}
+      }
+    }
+  );
+
+  parameterized(
+    `<p baz="v" abc="a"></p><a foo="./" baz="value"><span foo="./" baz="value">Span</span>Text</a>`,
+    `<p baz="v" abc-abc="aa"></p><a bar="./" baz="value"><span bar="./" qux="value">Span</span>Text</a>`,
+    {
+      '*': {
+        attr: {'foo': 'bar'}
+      },
+      'span': {
+        attr: {'baz': 'qux'}
+      },
+      'p': {
+        attr: {'/^(a.*)$/': {
+          replace: '$1-$1',
+          value: {
+            '/^(.*)$/': '$1$1'
+          }
+        }}
+      }
+    }
+  );
+
+  parameterized(
+    `<p baz="v" abc="a"></p><a foo="./" baz="value"><span foo="./" baz="value">Span</span>Text</a>`,
+    `<p baz="v" abc-abc="aa"></p><a bar="./" baz="value"><span qux="value" bar="./">Span</span>Text</a>`,
+    {
+      'span': {
+        attr: {'baz': 'qux'}
+      },
+      'p': {
+        attr: {'/^(a.*)$/': {
+          replace: '$1-$1',
+          value: {
+            '/^(.*)$/': '$1$1'
+          }
+        }}
+      },
+      '*': {
+        attr: {'foo': 'bar'}
+      }
+    }
+  );
+
+  parameterized(
     `<a href="./">漢字</a>`,
     `<a conv="./">&#x6F22;&#x5B57;</a>`,
     {
