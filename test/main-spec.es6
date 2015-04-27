@@ -351,4 +351,33 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<div foo.a="12345" foo.b="67890"></div><div foo.a="qwert" foo.b="yuiop" bar.a="asdfg" bar.b="hjkl;"></div>`,
+    `<div foo-foo="{{a1:234:, b6:789:}}"></div><div foo-foo="{{aq:wer:, by:uio:}}" bar="(a| dfas; b| klhj)"></div>`,
+    {
+      '*': {
+        attr: {
+          '/^(foo)\\.(.+)$/': {
+            method: 'merge',
+            replace: '$1-$1',
+            open: '{{',
+            close: '}}',
+            separator: ', ',
+            valuePattern: '/^(.)(.{3}).*$/',
+            valueReplace: '%a2$1:$2:'
+          },
+          '/^(bar)\\.(.+)$/': {
+            method: 'merge',
+            replace: '$1',
+            open: '(',
+            close: ')',
+            separator: '; ',
+            valuePattern: '/^(..)(..).*$/',
+            valueReplace: '%a2| $2$1'
+          }
+        }
+      }
+    }
+  );
 });
