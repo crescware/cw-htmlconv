@@ -39,6 +39,21 @@ function cacheReplaced(elm: any, attr: string, value: string) {
   return elm;
 }
 
+function convert(elm: any, patterns: any, attr: string, value: string) {
+  lodash.forEach(patterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
+    const valueRep        = replaceParam(rawReplace);
+    const valuePattern    = regExpOrSubstr(rawPattern);
+    const valueTestRegExp = valuePattern.re || new RegExp(valuePattern.substr);
+    if (valueTestRegExp.test(value)) {
+      const replacedValue = (valuePattern.re)
+        ? value.replace(valuePattern.re,     valueRep.replace)
+        : value.replace(valuePattern.substr, valueRep.replace);
+      elm = cacheReplaced(elm, attr, replacedValue);
+    }
+  });
+  return elm;
+}
+
 /**
  * @param {string}          input
  * @param {PatternsForAttr} patterns
@@ -59,8 +74,8 @@ export default function main(input: string, patterns?: any): string {
       console.log(elm.attribs);
       lodash.forEach(elm.attribs, (value: string, attr: string) => {
         lodash.forEach(attrPatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
-          const attrRep = replaceParam(rawReplace);
-          const attrPattern = regExpOrSubstr(rawPattern);
+          const attrRep        = replaceParam(rawReplace);
+          const attrPattern    = regExpOrSubstr(rawPattern);
           const attrTestRegExp = attrPattern.re || new RegExp(attrPattern.substr);
 
           if (attrTestRegExp.test(attr)) {
@@ -72,17 +87,7 @@ export default function main(input: string, patterns?: any): string {
 
             const valuePatterns = attrRep.value;
             if (valuePatterns) {
-              lodash.forEach(valuePatterns, (rawReplace: string|AttributeReplace, rawPattern: string) => {
-                const valueRep = replaceParam(rawReplace);
-                const valuePattern = regExpOrSubstr(rawPattern);
-                const valueTestRegExp = valuePattern.re || new RegExp(valuePattern.substr);
-                if (valueTestRegExp.test(value)) {
-                  const replacedValue = (valuePattern.re)
-                    ? value.replace(valuePattern.re,     valueRep.replace)
-                    : value.replace(valuePattern.substr, valueRep.replace);
-                  elm = cacheReplaced(elm, replacedAttr, replacedValue);
-                }
-              });
+              elm = convert(elm, valuePatterns, replacedAttr, value);
             }
           }
         });
