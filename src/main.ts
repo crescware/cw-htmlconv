@@ -33,6 +33,18 @@ interface AttributeReplaceParam extends ReplaceParam {
   value?: Patterns
 }
 
+interface AttributeReplaceMethodParam extends ReplaceParam {
+  method: string;
+}
+
+interface AttributeMergeParam extends AttributeReplaceMethodParam {
+  open:         string;
+  close:        string;
+  separator:    string;
+  valuePattern: string;
+  valueReplace: string;
+}
+
 interface PatternParam {
   re?: RegExp;
   substr?: string;
@@ -80,10 +92,17 @@ class Converter {
   }
 
   /**
+   * @returns {RegExp}
+   */
+  private pickRegExp(): RegExp {
+    return this.pattern.re || new RegExp(this.pattern.substr);
+  }
+
+  /**
    * @returns {boolean}
    */
   private targetToMatchThePattern(): boolean {
-    const re = this.pattern.re || new RegExp(this.pattern.substr);
+    const re = this.pickRegExp();
     if (!re.test(this.target)) {return false}
 
     this.match = this.target.match(re) || [];
@@ -102,6 +121,13 @@ class Converter {
       return this.elm;
     }
 
+    if (this.replaceParam.hasOwnProperty('method')) {
+      if ((<AttributeReplaceMethodParam>this.replaceParam).method === 'merge') {
+        this.merge();
+        return this.elm;
+      }
+    }
+
     const replaced = Converter.replace(this.target, this.pattern, this.replaceParam, this.parentMatch);
     this.cache(this.attrForCache(replaced), this.valueForCache(replaced));
     this.addReplacedPattern(this.target);
@@ -111,6 +137,31 @@ class Converter {
     // Run replacement for value
     this.convertCallback(this.replaceParam, this.attrForCache(replaced), {a: this.match});
     return this.elm;
+  }
+
+  /**
+   * @returns {void}
+   */
+  private merge() {
+    const replaceParam = <AttributeMergeParam>this.replaceParam;
+    const replacedAttr = Converter.replace(this.target, this.pattern, replaceParam);
+
+    let values: string[] = [];
+    const reAttr = this.pickRegExp();
+    const patternParam = Converter.treatPatternParam(replaceParam.valuePattern);
+    const replace = {replace: replaceParam.valueReplace};
+    lodash.forEach(this.elm.attribs, (value: string, attr: string) => {
+      if (!reAttr.test(attr)) {return}
+      const parentMatch: ParentMatch = {a: attr.match(reAttr) || []};
+      const replacedValue = Converter.replace(value, patternParam, replace, parentMatch);
+      values.push(replacedValue);
+    });
+
+    const stringValues = values.join(replaceParam.separator);
+    this.cache(this.attrForCache(replacedAttr), replaceParam.open + stringValues + replaceParam.close);
+    this.addReplacedPattern(this.target);
+
+    this.updateProcessedAttribs();
   }
 
   /**
@@ -191,6 +242,9 @@ class Converter {
    * @returns {string}
    */
   static replace(original: string, pattern: PatternParam, rep: ReplaceParam, parentMatch?: ParentMatch): string {
+    if (parentMatch && !parentMatch.hasOwnProperty('a') && !parentMatch.hasOwnProperty('v')) {
+      throw new Error('invalid parentMatch');
+    }
     var want = rep.replace;
 
     const parentMatchSyntax = want.match(/%a(\d)/g);

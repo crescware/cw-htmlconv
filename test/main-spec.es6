@@ -311,4 +311,44 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<div class="view" [class.aaa]="true"></div>`,
+    `<div class="view" ng-class="{aaa: true}"></div>`,
+    {
+      '*': {
+        attr: {
+          '/^\\[class\\.(.+)\\]$/': {
+            method: 'merge',
+            replace: 'ng-class',
+            open: '{',
+            close: '}',
+            separator: ', ',
+            valuePattern: '/^(.*)$/',
+            valueReplace: '%a1: $1'
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
+    `<div class="view" [class.aaa]="true" [class.bbb]="false"></div>`,
+    `<div class="view" ng-class="{aaa: true, bbb: false}"></div>`,
+    {
+      '*': {
+        attr: {
+          '/^\\[class\\.(.+)\\]$/': {
+            method: 'merge',
+            replace: 'ng-class',
+            open: '{',
+            close: '}',
+            separator: ', ',
+            valuePattern: '/^(.*)$/',
+            valueReplace: '%a1: $1'
+          }
+        }
+      }
+    }
+  );
 });
