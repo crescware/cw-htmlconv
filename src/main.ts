@@ -52,6 +52,10 @@ class Converter {
     this.pattern = this.treatPatternParam(pattern);
   }
 
+  /**
+   * @param {string|ReplaceParam} rep
+   * @returns {ReplaceParam}
+   */
   treatReplaceParam(rep: string|ReplaceParam): ReplaceParam {
     if (typeof rep === 'string') {
       return {replace: rep};
@@ -75,11 +79,17 @@ class Converter {
     return {re: re, substr: substr};
   }
 
-  test() {
+  /**
+   * @returns {boolean}
+   */
+  test(): boolean {
     const testRegExp = this.pattern.re || new RegExp(this.pattern.substr);
     return testRegExp.test(this.target);
   }
 
+  /**
+   * @returns {CwHtmlconvExtended}
+   */
   convert(): CwHtmlconvExtended {
     if (this.test()) {
       const replaced = this.replace(this.target, this.pattern, this.replaceParam);
@@ -103,21 +113,38 @@ class Converter {
     return this.elm;
   }
 
-  private cache(elm: CwHtmlconvExtended, attr: string, value: string) {
+  /**
+   * @param {CwHtmlconvExtended} elm
+   * @param {string} attr
+   * @param {string} value
+   * @returns {CwHtmlconvExtended}
+   */
+  private cache(elm: CwHtmlconvExtended, attr: string, value: string): CwHtmlconvExtended {
     elm._cwHtmlconvProcessed         = elm._cwHtmlconvProcessed || {};
     elm._cwHtmlconvProcessed.attribs = elm._cwHtmlconvProcessed.attribs || {};
     elm._cwHtmlconvProcessed.attribs[attr] = value;
     return elm;
   }
 
-  private addProcessedPattern(elm: CwHtmlconvExtended, target: string) {
+  /**
+   * @param {CwHtmlconvExtended} elm
+   * @param {string} target
+   * @returns {CwHtmlconvExtended}
+   */
+  private addProcessedPattern(elm: CwHtmlconvExtended, target: string): CwHtmlconvExtended {
     elm._cwHtmlconvProcessed                 = elm._cwHtmlconvProcessed || {};
     elm._cwHtmlconvProcessed.alreadyReplaced = elm._cwHtmlconvProcessed.alreadyReplaced || {};
     elm._cwHtmlconvProcessed.alreadyReplaced[target] = true;
     return elm;
   }
 
-  private replace(original: string, pattern: PatternParam, rep: ReplaceParam) {
+  /**
+   * @param {string}       original
+   * @param {PatternParam} pattern
+   * @param {ReplaceParam} rep
+   * @returns {string}
+   */
+  private replace(original: string, pattern: PatternParam, rep: ReplaceParam): string {
     return (pattern.re)
       ? original.replace(pattern.re,     rep.replace)
       : original.replace(pattern.substr, rep.replace);
@@ -154,10 +181,18 @@ class AttributeConverter extends Converter {
     this.target = this.attr;
   }
 
+  /**
+   * @param {string} replaced
+   * @returns {string}
+   */
   cachingAttr(replaced: string): string {
     return replaced;
   }
 
+  /**
+   * @param {*} _ non-use
+   * @returns {string}
+   */
   cachingValue(_: any): string {
     return this.value;
   }
@@ -179,10 +214,18 @@ class ValueConverter extends Converter {
     this.target = this.value;
   }
 
+  /**
+   * @param {*} _ non-use
+   * @returns {string}
+   */
   cachingAttr(_: any): string {
     return this.attr;
   }
 
+  /**
+   * @param {string} replaced
+   * @returns {string}
+   */
   cachingValue(replaced: string): string {
     return replaced;
   }
@@ -201,6 +244,9 @@ class Traverser {
     // noop
   }
 
+  /**
+   * @returns {CwHtmlconvExtended}
+   */
   traverse(): CwHtmlconvExtended {
     this.convert(AttributeConverter, {attr: this.attrPatterns}, this.attr, (rep: AttributeReplaceParam, _attr: string) => {
       const valuePatterns = rep.value;
@@ -212,7 +258,11 @@ class Traverser {
     return this.elm;
   }
 
-  private pickPatterns(patterns: {attr?: any; value?: any}) {
+  /**
+   * @param {*} patterns
+   * @returns {*}
+   */
+  private pickPatterns(patterns: {attr?: any; value?: any}): any {
     if (patterns.attr) {
       return patterns.attr;
     }
@@ -223,6 +273,13 @@ class Traverser {
     throw new Error('Invalid patterns');
   }
 
+  /**
+   * @param {Function} _Converter
+   * @param {*}        patterns
+   * @param {string}   attr
+   * @param {Function} cb
+   * @returns {void}
+   */
   private convert(_Converter: typeof Converter, patterns: {attr?: any; value?: any}, attr: string, cb?: (rep: ReplaceParam, attr: string) => void) {
     lodash.forEach(this.pickPatterns(patterns), (rawReplace: string|ReplaceParam, rawPattern: string) => {
       const converter = new _Converter(this.elm, attr, this.value, cb, rawReplace, rawPattern);
