@@ -247,4 +247,68 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<input #abcde>`,
+    `<input ng-model="dcb">`,
+    {
+      '*': {
+        attr: {
+          '/^#.(.)(.)(.).*$/': {
+            replace: 'ng-model',
+            value: {'/.*/': '%a3%a2%a1'}
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
+    `<div [innertext]="textbox.value"></div>`,
+    `<div innertext="{{textbox.value}}"></div>`,
+    {
+      '*': {
+        attr: {
+          '/^\\[([a-zA-Z_][a-zA-Z0-9_]*)\\]$/': {
+            replace: '$1',
+            value: {'/^(.*)$/': '{{$1}}'}
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
+    `<li *foreach="#todo of todos"></li>`,
+    `<li ng-repeat="todo in todos"></li>`,
+    {
+      '*': {
+        attr: {
+          '/^\\*foreach$/': {
+            replace: 'ng-repeat',
+            value: {
+              '/^#(.*)(\\s+)of(\\s+)(.*)$/': '$1$2in$3$4'
+            }
+          }
+        }
+      }
+    }
+  );
+
+  parameterized(
+    `<div class="view" [class.hidden]="todoEdit == todo"></div>`,
+    `<div class="view" ng-class="{hidden: todoEdit == todo}"></div>`,
+    {
+      '*': {
+        attr: {
+          '/^\\[class\\.(.*)\\]$/': {
+            replace: 'ng-class',
+            value: {
+              '/^(.*)$/': '{%a1: $1}'
+            }
+          }
+        }
+      }
+    }
+  );
 });
