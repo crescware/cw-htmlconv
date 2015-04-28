@@ -15,6 +15,7 @@ interface CwHtmlconvExtended extends CheerioElement {
     attribs?: {[attr: string]: string};
     alreadyReplaced?: {[target: string]: boolean};
     emptyValueToken?: {[attr: string]: string};
+    textAlreadyReplaced?: any;
   };
 }
 
@@ -171,7 +172,8 @@ class Converter {
     } catch (e) {
       if (this.replaceParam.remove) {
         // Remove from the already processed
-        this.updateProcessedAttribs();
+        this.removeProcessedAttribs();
+        console.log(175, this.elm._cwHtmlconvProcessed.attribs, this.pattern);
       }
       return;
     }
@@ -221,6 +223,19 @@ class Converter {
     if (processed !== void 0 && processed !== null) {
       delete this.elm._cwHtmlconvProcessed.attribs[this.target];
     }
+  }
+
+  /**
+   * @returns {void}
+   */
+  private removeProcessedAttribs() {
+    this.updateProcessedAttribs();
+    const re = Converter.pickRegExp(this.pattern);
+    lodash.forEach(this.elm._cwHtmlconvProcessed.attribs, (v, attr) => {
+      if (re.test(attr)) {
+        delete this.elm._cwHtmlconvProcessed.attribs[attr];
+      }
+    })
   }
 
   /**
@@ -509,6 +524,7 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
   const $ = cheerio.load(input);
   const selectors = Object.keys(allPatterns);
 
+  console.log(512, selectors.length, selectors);
   lodash.forEach(selectors, (selector: string) => {
     let selectorAttrRegExp = '';
     let originalSelector: string = void 0;
@@ -532,31 +548,53 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
       });
     }
     if (textPatterns) {
-      let matched = false;
+      let doTextTraverse = false;
       $(selector).each((i: number, elm: CwHtmlconvExtended) => {
-        matched = lodash.some(Object.keys(elm.attribs), (attr: string) => {
+        if (!selectorPattern.test(selector)) {
+          doTextTraverse = true;
+          return;
+        }
+        doTextTraverse = lodash.some(Object.keys(elm.attribs), (attr: string) => {
           return Converter.pickRegExp(Converter.treatPatternParam(selectorAttrRegExp)).test(attr);
         });
       });
 
-      if (matched) {
+      if (doTextTraverse) {
         const selectors = Object.keys(textPatterns);
+        let alreadyTraversed: {[selector: string]: boolean} = {};
         lodash.forEach(selectors, (selector: string) => {
           $(selector).each((i: number, elm: CwHtmlconvExtended) => {
-            const traversingTextNode = (elm: CwHtmlconvExtended) => {
-              lodash.forEach(elm.children, (child: CwHtmlconvExtended) => {
-                if (child.type !== 'text') {
-                  traversingTextNode(elm);
-                }
+            if (alreadyTraversed[selector]) {return}
+            alreadyTraversed[selector] = true;
+
+            function convert(elm_: CwHtmlconvExtended) {
+              if (!elm_) {return}
+
+              elm_._cwHtmlconvProcessed                     = elm_._cwHtmlconvProcessed || {};
+              elm_._cwHtmlconvProcessed.textAlreadyReplaced = elm_._cwHtmlconvProcessed.textAlreadyReplaced || {};
+              if (elm_.data) {
                 lodash.forEach(textPatterns[selector], (replaceParam_: string|ReplaceParam, pattern_: string) => {
+                  if (elm_._cwHtmlconvProcessed.textAlreadyReplaced[selector] && elm_._cwHtmlconvProcessed.textAlreadyReplaced[selector][pattern_]) {return}
                   const replaceParam = Converter.treatReplaceParam(replaceParam_);
                   const pattern = Converter.treatPatternParam(pattern_);
-                  const replaced = Converter.replace(child.data, pattern, replaceParam);
-                  child.data = replaced;
-                })
-              });
-            };
-            traversingTextNode(elm);
+                  const replaced = Converter.replace(elm_.data, pattern, replaceParam);
+                  elm_.data = replaced;
+                  elm_._cwHtmlconvProcessed.textAlreadyReplaced[selector] = {};
+                  elm_._cwHtmlconvProcessed.textAlreadyReplaced[selector][pattern_] = true;
+                });
+              }
+              if (elm_.children) {
+                convert(<CwHtmlconvExtended>elm_.children[0]);
+              }
+              if (elm_.next) {
+                convert(<CwHtmlconvExtended>elm_.next);
+              }
+              if (elm_.parent && elm_.parent.next) {
+                convert(<CwHtmlconvExtended>elm_.parent.next);
+              }
+            }
+
+            convert(elm);
           });
         });
       }
@@ -566,6 +604,7 @@ export default function main(input: string, allPatterns?: AllPatterns): string {
   let forceEmpty: [string, string][] = [];
   $('*').each((i: number, elm: CwHtmlconvExtended) => {
     if (!elm._cwHtmlconvProcessed) {return}
+    if (!elm._cwHtmlconvProcessed.emptyValueToken) {return}
     if (Object.keys(elm._cwHtmlconvProcessed.emptyValueToken).length) {
       lodash.forEach(elm._cwHtmlconvProcessed.emptyValueToken, (token: string, attr: string) => {
         forceEmpty.push([attr, token]);

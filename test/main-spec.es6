@@ -589,4 +589,80 @@ describe('main', () => {
       }
     }
   );
+
+  parameterized(
+    `<h1>Angular 2</h1>
+    <p>Succeed template loading</p>
+    <p class="inctement-value">{{value}}</p>
+    <button (click)="increment()">Increment</button>
+
+    <div>
+      <p>Name: {{firstName.value}}</p>
+      <input type="text" #first-name (keyup)>
+      <p>Name: {{lastName.value}}</p>
+      <input type="text" #last-name (keyup)>
+    </div>`,
+    `<h1>AngularJS 1</h1>
+    <p>Succeed template loading</p>
+    <p class="inctement-value">{{TestController.value}}</p>
+    <button ng-click="TestController.increment()">Increment</button>
+
+    <div>
+      <p>Name: {{ngModel.firstName}}</p>
+      <input type="text" ng-model="ngModel.firstName">
+      <p>Name: {{ngModel.lastName}}</p>
+      <input type="text" ng-model="ngModel.lastName">
+    </div>`,
+    {
+      'h1': {
+        textWithSelector: {
+          'h1': {
+            'Angular 2': 'AngularJS 1'
+          }
+        }
+      },
+      'p': {
+        textWithSelector: {
+          '.inctement-value': {
+            '/{{(.*)}}/': '{{TestController.$1}}'
+          }
+        }
+      },
+      '*': {
+        attr: {
+          '/^\\(([a-zA-Z_][a-zA-Z0-9_]*)\\)$/': {
+            replace: 'ng-$1',
+            value: {
+              '/(.*)/': 'TestController.$1'
+            }
+          },
+          '/^#(.*)$/': {
+            replace: 'ng-model',
+            value: {
+              '/^.*$/': {
+                replace: 'ngModel.%a1',
+                manipulation: {
+                  '%a1': 'camelize'
+                }
+              }
+            }
+          }
+        }
+      },
+      'input[/^#(.*)$/]': {
+        textWithSelector: {
+          'div p': {
+            '/{{(.*\\.)*(.*)\.value}}/': {
+              replace: '{{ngModel.$2}}'
+            }
+          }
+        },
+        attr: {
+          '/.*keyup.*/': {
+            remove: true
+          }
+        }
+      }
+    }
+  );
 });
