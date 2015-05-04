@@ -10,6 +10,29 @@ import * as cheerio from 'cheerio';
 import * as lodash from 'lodash';
 import * as S from 'string';
 
+interface PatternObject {
+  selector:      string;
+  attrPattern?:  string;
+  attrReplace?:  string;
+  valuePattern?: string;
+  valueReplace?: string;
+  textPattern?:  string;
+  textReplace?:  string;
+  valueEmpty?:   boolean;
+  method?: {
+    behavior: string;
+    open:     string;
+    start:    string;
+    end:      string;
+  };
+  manipulation?: Array<{
+    type:   string;
+    match:  number;
+    filter: string;
+  }>;
+  subPatterns?: PatternObject[];
+}
+
 class Pattern {
   /**
    * @constructor
