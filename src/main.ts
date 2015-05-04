@@ -10,20 +10,77 @@ import * as cheerio from 'cheerio';
 import * as lodash from 'lodash';
 import * as S from 'string';
 
-class Converter {
+class Pattern {
   /**
    * @constructor
    */
-  constructor() {
-    //
+  constructor(public selector: string, public patterns: any) {
+    // noop
+  }
+
+  /**
+   * @param {CheerioElement} element
+   * @returns {boolean}
+   */
+  private match(element: CheerioElement): boolean {
+    return false;
+  }
+
+  /**
+   * @param {CheerioElement} element
+   * @returns {Pattern}
+   */
+  process(element: CheerioElement): Pattern {
+    if (!this.match(element)) {return}
   }
 }
 
-function traverse(element: CheerioElement) {
-  for (const child of element.children) {
-    
-    traverse(child);
+class Converter {
+  private subPatterns: Pattern[] = [];
+
+  /**
+   * @constructor
+   */
+  constructor(private patterns: Pattern[]) {
+    // noop
   }
+
+  /**
+   * @param {CheerioStatic} $
+   */
+  convert($: CheerioStatic) {
+    this.traverse($.root().toArray()[0]);
+    if (this.subPatterns.length) {
+      const subConverter =new Converter(this.subPatterns);
+      subConverter.convert($);
+    }
+  }
+
+  /**
+   * @param {CheerioElement} element
+   */
+  private traverse(element: CheerioElement) {
+    for (const child of element.children) {
+      this.convertElement(child);
+      if (child.type === 'tag') {this.traverse(child)}
+    }
+  }
+
+  /**
+   * @param {CheerioElement} element
+   */
+  private convertElement(element: CheerioElement) {
+    this.patterns.forEach(pattern => {
+      const subPattern = pattern.process(element);
+      if (subPattern) {this.subPatterns.push(subPattern)}
+    });
+  }
+}
+
+function generatePatterns(allPatterns: any) {
+  return Object.keys(allPatterns).map(selector => {
+    return new Pattern(selector, allPatterns[selector]);
+  });
 }
 
 export default function main(input: string, allPatterns?: any): string {
@@ -32,7 +89,8 @@ export default function main(input: string, allPatterns?: any): string {
 
   const $ = cheerio.load(input);
 
-  traverse($.root().toArray()[0]);
+  const converter = new Converter(generatePatterns(allPatterns));
+  converter.convert($);
 
   return $.html();
 }
