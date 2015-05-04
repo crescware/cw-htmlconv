@@ -10,11 +10,29 @@ import * as cheerio from 'cheerio';
 import * as lodash from 'lodash';
 import * as S from 'string';
 
+class Converter {
+  /**
+   * @constructor
+   */
+  constructor() {
+    //
+  }
+}
+
+function traverse(element: CheerioElement) {
+  for (const child of element.children) {
+    
+    traverse(child);
+  }
+}
+
 export default function main(input: string, allPatterns?: any): string {
   const isEmpty = allPatterns === void 0 || allPatterns === null || !Object.keys(allPatterns).length;
   if (isEmpty) {return input}
 
   const $ = cheerio.load(input);
-  
+
+  traverse($.root().toArray()[0]);
+
   return $.html();
 }
