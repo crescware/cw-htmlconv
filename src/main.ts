@@ -114,18 +114,19 @@ class BasicPattern extends Pattern {
       const attrMatching = this.attrMatch(attr);
       if (attrMatching) {
         const attrReplaced = this.attrReplace(attr);
-        result.attribs[attr] = {key: attrReplaced};
+        result.attribs[attr] = [];
+        result.attribs[attr].push({key: attrReplaced});
 
         const valueMatching = this.valueMatch(value);
         if (valueMatching) {
           const valueReplaced = this.valueReplace(value);
-          result.attribs[attr].value = valueReplaced;
+          result.attribs[attr][0].value = valueReplaced;
         } else {
-          result.attribs[attr].value = value;
+          result.attribs[attr][0].value = value;
         }
 
-        if (result.attribs[attr].value === '' && this.valueEmpty) {
-          result.attribs[attr].value = EMPTY_DUMMY;
+        if (result.attribs[attr][0].value === '' && this.valueEmpty) {
+          result.attribs[attr][0].value = EMPTY_DUMMY;
         }
       }
     }
@@ -184,13 +185,13 @@ class Converter {
 
     results.forEach(result => {
       if (result.attribs) {
-        for (const attr in result.attribs) {
+        Object.keys(result.attribs).forEach((attr) => {
           const attribs: any = element.attribs;
           delete attribs[attr];
-          if (result.attribs[attr]) {
-            attribs[result.attribs[attr].key] = result.attribs[attr].value;
-          }
-        }
+          (<any>result.attribs)[attr].forEach((kv: any) => {
+            attribs[kv.key] = kv.value;
+          });
+        });
       }
     });
   }
