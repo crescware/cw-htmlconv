@@ -1,24 +1,11 @@
-/// <reference path="../typings/node/node.d.ts" />
-/// <reference path="../typings/commandpost/commandpost.d.ts" />
-import * as commandpost from 'commandpost';
+'use strict';
+import * as commander from 'commander';
 import * as fs from 'fs';
-import htmlconv from './legacy-main';
-
-interface RootOptions {
-  encoding: string[];
-  out: string[];
-  patterns: string[];
-  patternsText: string[];
-  text: string[];
-}
-
-interface RootArgs {
-  inputPath: string;
-}
-
+import htmlconv from './main';
 const pkg = require('../package.json');
-const root = commandpost
-  .create<RootOptions, RootArgs>('cw-htmlconv [inputPath]')
+
+const root = commander
+  .create('cw-htmlconv [inputPath]')
   .version(pkg.version, '-v, --version')
   .option('-o, --out [path]', 'Output to single file')
   .option('-p, --patterns [path]', 'JSON file of Definition for convert patterns')
@@ -33,24 +20,24 @@ const root = commandpost
     const patternsPromise = patterns(opts);
 
     Promise.all([textPromise, patternsPromise])
-      .then((values: any[]) => {
+      .then((values) => {
         return htmlconv(values[0]/* text */, values[1]/* pattern */);
       })
-      .then((out: string) => {
+      .then((out) => {
         if (!opts.out[0]) {
           process.stdout.write(out + '\n');
           return;
         }
         outputFile(opts.out[0], out);
       })
-      .catch((err: any) => {
+      .catch((err) => {
         console.error(err.stack);
       });
   });
 
-commandpost
+commander
   .exec(root, process.argv)
-  .catch((err: any) => {
+  .catch((err) => {
     if (err instanceof Error) {
       console.error(err.stack);
     } else {
@@ -60,18 +47,18 @@ commandpost
   });
 
 /**
- * @param {RootOptions} opts
- * @param {RootArgs} args
+ * @param opts
+ * @param args
  * @returns {Promise}
  */
-function text(opts: RootOptions, args: RootArgs): Promise<string> {
+function text(opts, args) {
   return new Promise((resolve, reject) => {
     if (!args.inputPath && opts.text[0]) {
       resolve(opts.text[0]);
       return;
     }
     if (args.inputPath) {
-      fs.readFile(args.inputPath, 'utf8', (err: any, data: string) => {
+      fs.readFile(args.inputPath, 'utf8', (err, data) => {
         if (err) {return reject(err)}
         resolve(data);
       });
@@ -82,14 +69,14 @@ function text(opts: RootOptions, args: RootArgs): Promise<string> {
 }
 
 /**
- * @param {RootOptions} opts
+ * @param opts
  * @returns {Promise}
  */
-function patterns(opts: RootOptions): Promise<any> {
+function patterns(opts) {
   return new Promise((resolve, reject) => {
     if (opts.patterns && opts.patterns[0]) {
       let patternsPath = opts.patterns[0];
-      fs.readFile(patternsPath, 'utf8', (err: any, data: string) => {
+      fs.readFile(patternsPath, 'utf8', (err, data) => {
         if (err) {return reject(err)}
         var json = '';
         try {
@@ -127,7 +114,7 @@ function patterns(opts: RootOptions): Promise<any> {
  * @param {string} data
  * @returns {void}
  */
-function outputFile(path: string, data: string) {
+function outputFile(path, data) {
   fs.writeFile(path, data, (err) => {
     if (err) {
       process.stderr.write(err + '\n');
