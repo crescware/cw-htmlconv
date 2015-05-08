@@ -176,10 +176,11 @@ class Converter {
   }
 
   /**
+   * @private
    * @param {CheerioElement} element
    * @returns {void}
    */
-  private convertElement(element) {
+  _convertElement(element) {
     const results = this.patterns.map(pattern => {
       return pattern.process(element);
     });
