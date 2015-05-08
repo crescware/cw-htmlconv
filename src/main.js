@@ -141,7 +141,7 @@ class MethodPattern extends Pattern {
 
 class Converter {
   patterns;
-  subPatterns = [];
+  subPatterns;
 
   /**
    * @constructor
@@ -149,6 +149,7 @@ class Converter {
    */
   constructor(patterns) {
     this.patterns = patterns;
+    this.subPatterns = [];
   }
 
   /**
