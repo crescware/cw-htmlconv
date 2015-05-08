@@ -1,8 +1,3 @@
-/// <reference path="../typings/es6-promise/es6-promise.d.ts" />
-/// <reference path="../typings/cheerio/cheerio.d.ts" />
-/// <reference path="../typings/css-select/css-select.d.ts" />
-/// <reference path="../typings/lodash/lodash.d.ts" />
-/// <reference path="../typings/string/string.d.ts" />
 'use strict';
 import {Promise} from 'es6-promise';
 import * as cheerio from 'cheerio';
@@ -11,18 +6,21 @@ import * as S from 'string';
 
 let EMPTY_DUMMY = '$cw$htmlconv$empty$dummy';
 
-
-
 class Pattern {
-  protected matcher: Function; // compiled selector
-  protected valueEmpty: boolean;
-  private attrRe: RegExp;
-  private valueRe: RegExp;
+  pattern;
+
+  matcher; // compiled selector
+  valueEmpty; // convenience
+
+  attrRe;
+  valueRe;
 
   /**
    * @constructor
+   * @param {PatternObject} pattern
    */
-  constructor(protected pattern: any) {
+  constructor(pattern) {
+    this.pattern = pattern;
     this.valueEmpty = this.pattern.valueEmpty;
 
     if (this.valueEmpty === void 0 || this.valueEmpty === null) {
@@ -38,25 +36,41 @@ class Pattern {
   /**
    * @abstract
    */
-  process(element: CheerioElement): any {
+  process(element) {
     return void 0;
   }
 
-  protected attrMatch(str: string): string[] {
+  /**
+   * @param {string} str
+   * @returns {Array<string>}
+   */
+  attrMatch(str) {
     if (!this.pattern.attrPattern) {return null}
     return str.match(this.attrRe);
   }
 
-  protected valueMatch(str: string): string[] {
+  /**
+   * @param {string} str
+   * @returns {Array<string>}
+   */
+  valueMatch(str) {
     if (!this.pattern.valuePattern) {return null}
     return str.match(this.valueRe);
   }
 
-  protected attrReplace(str: string): string {
+  /**
+   * @param {string} str
+   * @returns {string}
+   */
+  attrReplace(str) {
     return str.replace(this.attrRe, this.pattern.attrReplace);
   }
 
-  protected valueReplace(str: string): string {
+  /**
+   * @param {string} str
+   * @returns {string}
+   */
+  valueReplace(str) {
     return str.replace(this.valueRe, this.pattern.valueReplace);
   }
 }
@@ -64,29 +78,31 @@ class Pattern {
 class BasicPattern extends Pattern {
   /**
    * @constructor
+   * @param {PatternObject} pattern
    */
-  constructor(pattern: any) {
+  constructor(pattern) {
     super(pattern);
   }
 
   /**
+   * @private
    * @param {CheerioElement} element
    * @returns {boolean}
    */
-  private match(element: CheerioElement): boolean {
+  match(element) {
     return this.matcher(element);
   }
 
   /**
    * @param {CheerioElement} element
-   * @returns {*}
+   * @returns {*} result object
    */
-  process(element: CheerioElement): any {
+  process(element) {
     if (!this.match(element)) {return {}}
 
-    const result: any = {attribs: {}};
-    for (const attr in element.attribs) {
-      const attribs: any = element.attribs;
+    const result = {attribs: {}};
+    for (let attr in element.attribs) {
+      const attribs = element.attribs;
       const value = attribs[attr];
 
       const attrMatching = this.attrMatch(attr);
@@ -116,37 +132,42 @@ class BasicPattern extends Pattern {
 class MethodPattern extends Pattern {
   /**
    * @constructor
+   * @param {PatternObject} pattern
    */
-  constructor(pattern: any) {
+  constructor(pattern) {
     super(pattern);
   }
 }
 
 class Converter {
-  private subPatterns: Pattern[] = [];
+  patterns;
+  subPatterns = [];
 
   /**
    * @constructor
+   * @param {Array<Pattern>} patterns
    */
-  constructor(private patterns: Pattern[]) {
-    // noop
+  constructor(patterns) {
+    this.patterns = patterns;
   }
 
   /**
    * @param {CheerioStatic} $
+   * @returns {void}
    */
-  convert($: CheerioStatic) {
+  convert($) {
     this.traverse($.root().toArray()[0]);
     if (this.subPatterns.length) {
-      const subConverter =new Converter(this.subPatterns);
+      const subConverter = new Converter(this.subPatterns);
       subConverter.convert($);
     }
   }
 
   /**
    * @param {CheerioElement} element
+   * @returns {void}
    */
-  private traverse(element: CheerioElement) {
+  traverse(element) {
     for (const child of element.children) {
       this.convertElement(child);
       if (child.type === 'tag') {this.traverse(child)}
@@ -155,8 +176,9 @@ class Converter {
 
   /**
    * @param {CheerioElement} element
+   * @returns {void}
    */
-  private convertElement(element: CheerioElement) {
+  private convertElement(element) {
     const results = this.patterns.map(pattern => {
       return pattern.process(element);
     });
@@ -164,9 +186,9 @@ class Converter {
     results.forEach(result => {
       if (result.attribs) {
         Object.keys(result.attribs).forEach((attr) => {
-          const attribs: any = element.attribs;
+          const attribs = element.attribs;
           delete attribs[attr];
-          (<any>result.attribs)[attr].forEach((kv: any) => {
+          result.attribs[attr].forEach((kv) => {
             attribs[kv.key] = kv.value;
           });
         });
@@ -175,7 +197,11 @@ class Converter {
   }
 }
 
-function generatePatterns(patterns: any[]) {
+/**
+ * @param {Array<PatternObject>} patterns
+ * @returns {Array<Pattern>}
+ */
+function generatePatterns(patterns) {
   return patterns.map(pattern => {
     if (pattern.method) {
       return new MethodPattern(pattern);
@@ -184,8 +210,13 @@ function generatePatterns(patterns: any[]) {
   });
 }
 
-export default function main(input: string, patterns?: any[]): string {
-  const isEmpty = patterns === void 0 || patterns === null || !Object.keys(patterns).length;
+/**
+ * @param {string} input
+ * @param {Array<PatternObject>} [patterns]
+ * @returns string
+ */
+export default function main(input, patterns) {
+  const isEmpty = patterns === void 0 || patterns === null || patterns.length < 1;
   if (isEmpty) {return input}
 
   const $ = cheerio.load(input);
