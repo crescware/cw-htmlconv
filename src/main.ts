@@ -11,29 +11,7 @@ import * as S from 'string';
 
 let EMPTY_DUMMY = '$cw$htmlconv$empty$dummy';
 
-interface PatternObject {
-  selector:      string;
-  attrPattern?:  string;
-  attrReplace?:  string;
-  attrRemove?:   boolean;
-  valuePattern?: string;
-  valueReplace?: string;
-  textPattern?:  string;
-  textReplace?:  string;
-  valueEmpty?:   boolean;
-  method?: {
-    behavior: string;
-    open:     string;
-    start:    string;
-    end:      string;
-  };
-  manipulation?: Array<{
-    type:   string;
-    match:  number;
-    filter: string;
-  }>;
-  subPatterns?: PatternObject[];
-}
+
 
 class Pattern {
   protected matcher: Function; // compiled selector
@@ -44,7 +22,7 @@ class Pattern {
   /**
    * @constructor
    */
-  constructor(protected pattern: PatternObject) {
+  constructor(protected pattern: any) {
     this.valueEmpty = this.pattern.valueEmpty;
 
     if (this.valueEmpty === void 0 || this.valueEmpty === null) {
@@ -87,7 +65,7 @@ class BasicPattern extends Pattern {
   /**
    * @constructor
    */
-  constructor(pattern: PatternObject) {
+  constructor(pattern: any) {
     super(pattern);
   }
 
@@ -139,7 +117,7 @@ class MethodPattern extends Pattern {
   /**
    * @constructor
    */
-  constructor(pattern: PatternObject) {
+  constructor(pattern: any) {
     super(pattern);
   }
 }
@@ -197,7 +175,7 @@ class Converter {
   }
 }
 
-function generatePatterns(patterns: PatternObject[]) {
+function generatePatterns(patterns: any[]) {
   return patterns.map(pattern => {
     if (pattern.method) {
       return new MethodPattern(pattern);
@@ -206,7 +184,7 @@ function generatePatterns(patterns: PatternObject[]) {
   });
 }
 
-export default function main(input: string, patterns?: PatternObject[]): string {
+export default function main(input: string, patterns?: any[]): string {
   const isEmpty = patterns === void 0 || patterns === null || !Object.keys(patterns).length;
   if (isEmpty) {return input}
 
