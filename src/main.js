@@ -169,8 +169,8 @@ class Converter {
    * @returns {void}
    */
   traverse(element) {
-    for (const child of element.children) {
-      this.convertElement(child);
+    for (let child of element.children) {
+      this._convertElement(child);
       if (child.type === 'tag') {this.traverse(child)}
     }
   }
