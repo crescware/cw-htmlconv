@@ -5,27 +5,22 @@ import * as cssSelect from 'css-select';
 let EMPTY_DUMMY = '$cw$htmlconv$empty$dummy';
 
 class Pattern {
-  pattern;
-
-  matcher; // compiled selector
-  valueEmpty; // convenience
-
-  attrRe;
-  valueRe;
-
   /**
    * @constructor
    * @param {PatternObject} pattern
    */
   constructor(pattern) {
+    /** @member {PatternObject} */
     this.pattern = pattern;
-    this.valueEmpty = this.pattern.valueEmpty;
 
+    // convenience
+    this.valueEmpty = this.pattern.valueEmpty;
     if (this.valueEmpty === void 0 || this.valueEmpty === null) {
       this.valueEmpty = true;
     }
     this.valueEmpty = !!this.valueEmpty;
 
+    // compiled selector
     this.matcher = cssSelect.compile(this.pattern.selector);
     this.attrRe  = new RegExp(this.pattern.attrPattern);
     this.valueRe = new RegExp(this.pattern.valuePattern);
@@ -33,9 +28,11 @@ class Pattern {
 
   /**
    * @abstract
+   * @param {CheerioElement} _ - element
+   * @returns {void}
    */
-  process(element) {
-    return void 0;
+  process(_) {
+    // noop
   }
 
   /**
@@ -43,7 +40,7 @@ class Pattern {
    * @returns {Array<string>}
    */
   attrMatch(str) {
-    if (!this.pattern.attrPattern) {return null}
+    if (!this.pattern.attrPattern) { return null; }
     return str.match(this.attrRe);
   }
 
@@ -52,7 +49,7 @@ class Pattern {
    * @returns {Array<string>}
    */
   valueMatch(str) {
-    if (!this.pattern.valuePattern) {return null}
+    if (!this.pattern.valuePattern) { return null; }
     return str.match(this.valueRe);
   }
 
@@ -96,29 +93,31 @@ class BasicPattern extends Pattern {
    * @returns {*} result object
    */
   process(element) {
-    if (!this.match(element)) {return {}}
+    if (!this.match(element)) { return {}; }
 
     const result = {attribs: {}};
     for (let attr in element.attribs) {
-      const attribs = element.attribs;
-      const value = attribs[attr];
+      if (element.attribs.hasOwnProperty(attr)) {
+        const attribs = element.attribs;
+        const value = attribs[attr];
 
-      const attrMatching = this.attrMatch(attr);
-      if (attrMatching) {
-        const attrReplaced = this.attrReplace(attr);
-        result.attribs[attr] = [];
-        result.attribs[attr].push({key: attrReplaced});
+        const attrMatching = this.attrMatch(attr);
+        if (attrMatching) {
+          const attrReplaced = this.attrReplace(attr);
+          result.attribs[attr] = [];
+          result.attribs[attr].push({key: attrReplaced});
 
-        const valueMatching = this.valueMatch(value);
-        if (valueMatching) {
-          const valueReplaced = this.valueReplace(value);
-          result.attribs[attr][0].value = valueReplaced;
-        } else {
-          result.attribs[attr][0].value = value;
-        }
+          const valueMatching = this.valueMatch(value);
+          if (valueMatching) {
+            const valueReplaced = this.valueReplace(value);
+            result.attribs[attr][0].value = valueReplaced;
+          } else {
+            result.attribs[attr][0].value = value;
+          }
 
-        if (result.attribs[attr][0].value === '' && this.valueEmpty) {
-          result.attribs[attr][0].value = EMPTY_DUMMY;
+          if (result.attribs[attr][0].value === '' && this.valueEmpty) {
+            result.attribs[attr][0].value = EMPTY_DUMMY;
+          }
         }
       }
     }
@@ -138,9 +137,6 @@ class MethodPattern extends Pattern {
 }
 
 class Converter {
-  patterns;
-  subPatterns;
-
   /**
    * @constructor
    * @param {Array<Pattern>} patterns
@@ -169,7 +165,7 @@ class Converter {
   traverse(element) {
     for (let child of element.children) {
       this._convertElement(child);
-      if (child.type === 'tag') {this.traverse(child)}
+      if (child.type === 'tag') { this.traverse(child); }
     }
   }
 
@@ -217,7 +213,7 @@ function generatePatterns(patterns) {
  */
 export default function main(input, patterns) {
   const isEmpty = patterns === void 0 || patterns === null || patterns.length < 1;
-  if (isEmpty) {return input}
+  if (isEmpty) { return input; }
 
   const $ = cheerio.load(input);
 
