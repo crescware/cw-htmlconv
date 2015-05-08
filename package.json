@@ -46,10 +46,8 @@
   },
   "scripts": {
     "build": "gulp build",
-    "dtsm": "dtsm install",
-    "gulpfile": "babel gulpfile.es6 -o gulpfile.js",
     "test": "gulp test",
-    "watch": "gulp watch:test",
+    "watch": "gulp watch",
     "watch:cli": "gulp watch:cli"
   }
 }
