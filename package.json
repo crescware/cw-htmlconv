@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "cheerio": "^0.19.0",
-    "commandpost": "^0.1.1",
+    "commander": "^2.8.1",
     "css-select": "^1.1.0",
     "es6-promise": "^2.1.0",
     "htmlparser2": "^3.8.1",
@@ -26,12 +26,14 @@
   "devDependencies": {
     "babel": "^5.2.17",
     "babel-core": "^5.2.17",
+    "browserify": "^10.1.3",
     "del": "^1.1.1",
     "dtsm": "^0.9.1",
     "espower-babel": "^2.1.1",
     "gulp": "^3.8.11",
     "gulp-mocha": "^2.0.1",
     "gulp-shell": "^0.4.1",
+    "licensify": "^1.1.0",
     "mkdirp": "^0.5.0",
     "power-assert": "^0.11.0",
     "run-sequence": "^1.0.2",
