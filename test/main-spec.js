@@ -1,6 +1,5 @@
 import assert from 'power-assert';
-import htmlconv_ from '../index';
-const htmlconv = htmlconv_.default; // HACK for default by TypeScript 1.5 Alpha
+import htmlconv from '../index';
 
 describe('main', () => {
   function parameterized(input, expected, pattern) {
