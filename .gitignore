@@ -1,12 +1,4 @@
-# for WebStorm
 .idea/
-
-# for npm
+lib/
 node_modules/
 npm-debug.log
-
-# for gulp
-.tscache/
-coverage/
-typings/
-lib/
