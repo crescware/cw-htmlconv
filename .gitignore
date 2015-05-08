@@ -10,13 +10,3 @@ npm-debug.log
 coverage/
 typings/
 lib/
-
-# for test
-test-espowered/
-
-# TypeScript
-*.js
-*.js.map
-
-!gulpfile.js
-!index.js
