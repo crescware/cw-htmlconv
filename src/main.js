@@ -1,8 +1,6 @@
 'use strict';
-import {Promise} from 'es6-promise';
 import * as cheerio from 'cheerio';
 import * as cssSelect from 'css-select';
-import * as S from 'string';
 
 let EMPTY_DUMMY = '$cw$htmlconv$empty$dummy';
 
