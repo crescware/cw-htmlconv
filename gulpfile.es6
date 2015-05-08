@@ -15,13 +15,16 @@ const paths = {
 };
 
 const bin = {
-  tsc:        `${paths.npmbin}/tsc`,
   babel:      `${paths.npmbin}/babel`,
-  browserify: `${paths.npmbin}/browserify`
+  browserify: `${paths.npmbin}/browserify`,
+  eslint:     `${paths.npmbin}/eslint`
 };
 
 /* clean */
 gulp.task('clean', del.bind(null, [paths.lib]));
+
+/* eslint */
+gulp.task('eslint:src', shell.task([`${bin.eslint} ${paths.src}`]));
 
 /* babel */
 gulp.task('babel:src', shell.task([`${bin.babel} ${paths.src} --out-dir ${paths.lib}`]));
@@ -29,7 +32,7 @@ gulp.task('babel:src', shell.task([`${bin.babel} ${paths.src} --out-dir ${paths.
 /* build */
 const globalName = 'cwHtmlconv';
 gulp.task('build:standalone', shell.task([`${bin.browserify} -p licensify --standalone ${globalName} ./index.js -o ./cw-htmlconv.js`]));
-gulp.task('build:src', (done) => seq('babel:src', done));
+gulp.task('build:src', (done) => seq('eslint:src', 'babel:src', done));
 gulp.task('build',     (done) => seq('build:src', 'build:standalone', done));
 
 /* test */
